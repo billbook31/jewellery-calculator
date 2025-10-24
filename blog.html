@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog - Jewellery Calculator</title>
+<style>
+body {
+  font-family: Poppins, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+h2 {
+  text-align: center;
+  color: #b8860b;
+}
+.blog-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+.blog-card h3 {
+  color: #b8860b;
+  margin-bottom: 10px;
+}
+.blog-card p {
+  line-height: 1.6;
+}
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 14px;
+  color: #777;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Jewellery Blog & Updates</h2>
+  <div id="blogContainer">
+    <!-- Blog posts will appear here -->
+  </div>
+  <div class="footer">
+    © 2025 Jewellery Calculator | All Rights Reserved
+  </div>
+</div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="firebase-init.js"></script> <!-- Your centralized Firebase config -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const db = firebase.firestore();
+  const container = document.getElementById("blogContainer");
+
+  db.collection('blogs').orderBy('date', 'desc').get().then(snapshot => {
+    if (snapshot.empty) {
+      container.innerHTML = '<p>No blog posts available at the moment. Please check back later.</p>';
+      return;
+    }
+
+    let html = '';
+    snapshot.forEach(doc => {
+      const blog = doc.data();
+      html += `
+        <div class="blog-card">
+          <h3>${blog.title}</h3>
+          <small><i>Published on: ${blog.date}</i></small>
+          <p>${blog.content}</p>
+        </div>`;
+    });
+    container.innerHTML = html;
+  }).catch(error => {
+    console.error("Error fetching blogs: ", error);
+    container.innerHTML = '<p>Could not load blog posts. Please try again later.</p>';
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jewellery Dashboard</title>
+<style>
+body { font-family: 'Poppins', sans-serif; background: #f5f6fa; margin:0; color:#222; padding:15px;}
+h1,h3 { text-align:center; }
+.container { max-width: 900px; margin: 10px auto; background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.metric { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #ccc; }
+.ad-section { margin-top:20px; text-align:center; padding:12px; border:2px dashed #00bcd4; border-radius:8px; font-weight:bold; background:#fff3cd; }
+.gold-rate { display:flex; justify-content:space-between; padding:8px; background:#f0f8ff; margin:5px 0; border-radius:8px; }
+.logout-button { position: absolute; top: 15px; right: 15px; background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+.blog-section { margin-top:20px; padding:20px; border:1px solid #ccc; border-radius:8px; background:#fff9e6; }
+.blog-section input, .blog-section textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+.blog-section button { background: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+.blog-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+.blog-list-item button { background: #c82333; font-size: 12px; padding: 5px 8px; }
+.review-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; background: #fdfdfd; }
+.review-list-item p { margin: 0; flex-grow: 1; font-style: italic; }
+.review-list-item small { color: #777; margin-left: 15px; flex-shrink: 0; }
+.review-list-item button { background: #c82333; font-size: 12px; padding: 5px 8px; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 15px; }
+
+</style>
+</head>
+<body>
+
+<h1>💎 Jewellery Dashboard</h1>
+<button onclick="logout()" class="logout-button">Logout</button>
+
+<div class="container">
+  <h3>Analytics Overview</h3>
+  <div class="metric"><span>Total Visitors:</span><span id="totalVisitors">0</span></div>
+  <div class="metric"><span>Total Users Used App:</span><span id="totalUsersUsed">0</span></div>
+  <div class="metric"><span>Total Bills Generated:</span><span id="totalBills">0</span></div>
+  <div class="metric"><span>Total WhatsApp Shares:</span><span id="totalShares">0</span></div>
+  <div class="metric"><span>Total Shop Registrations:</span><span id="totalShops">0</span></div>
+  <div class="metric"><span>Total Reviews:</span><span id="totalReviews">0</span></div>
+  <div class="metric"><span>New Items Value:</span><span id="totalNewItems">₹0.00</span></div>
+  <div class="metric"><span>Old Jewellery Deduction:</span><span id="totalOldDeduction">₹0.00</span></div>
+  <div class="metric"><span>Grand Total:</span><span id="grandTotalDashboard">₹0.00</span></div>
+</div>
+
+<div class="container">
+  <h3>🔥 Mumbai Gold Live Rate</h3>
+  <div class="gold-rate"><span>24K:</span><span id="goldRate24K">Loading...</span></div>
+  <div class="gold-rate"><span>22K:</span><span id="goldRate22K">Loading...</span></div>
+  <div class="gold-rate"><span>20K:</span><span id="goldRate20K">Loading...</span></div>
+</div>
+
+<div class="ad-section" id="adsColumn">
+  AdSense Slot Here (Online) / Offline Ads Placeholder
+</div>
+
+<div class="blog-section">
+  <h3>Blog & SEO Management</h3>
+  <input type="text" id="blogTitle" placeholder="Blog Title">
+  <textarea id="blogContent" rows="4" placeholder="Blog Content"></textarea>
+  <button onclick="addBlogPost()">Add New Blog Post</button>
+  <div id="blogList" style="margin-top: 20px;">
+    <h4>Existing Blogs:</h4>
+    <!-- Blog posts will be listed here -->
+  </div>
+</div>
+
+<div class="container">
+  <h3>💬 User Reviews & Feedback</h3>
+  <div id="reviewList">
+    <!-- Reviews will be loaded here by JavaScript -->
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics-compat.js"></script> <!-- Analytics -->
+<script src="firebase-init.js"></script> <!-- Your centralized Firebase config -->
+
+<script>
+// This function needs to be in the global scope to be called by onclick.
+function logout() {
+  if (firebase && firebase.auth) {
+    firebase.auth().signOut().then(() => {
+      window.location.href = 'login.html';
+    }).catch(error => console.error("Logout Error:", error));
+  }
+}
+document.addEventListener('DOMContentLoaded', function() {  
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const analytics = firebase.analytics(); // Correct way to initialize
+
+  // --- Authentication Check for Dashboard ---
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      // User is not signed in. Redirect to login page.
+      // You'll need to create a login.html page or similar.
+      window.location.href = 'login.html'; // Replace with your actual login page URL
+    } else {
+      // User is signed in. You can optionally check if they are an admin.
+      console.log("Admin logged in:", user.email);
+    }
+  });
+
+  // --- REFACTOR: Fetch all analytics from Firestore in real-time ---
+
+  // 1. Listen for general events (visitors, shares, shops, reviews)
+  db.collection('analytics_events').onSnapshot(snapshot => {
+    let visitors = 0;
+    let shares = 0;
+    let shops = 0;
+    let reviews = 0;
+
+    snapshot.forEach(doc => {
+        const event = doc.data();
+        if (event.type === 'visitor') visitors++;
+        if (event.type === 'whatsapp_share') shares++;
+        if (event.type === 'shop_registered') shops++;
+        if (event.type === 'review_submitted') reviews++;
+    });
+
+    document.getElementById('totalVisitors').innerText = visitors;
+    document.getElementById('totalUsersUsed').innerText = visitors; // Using visitors as a proxy for users for now
+    document.getElementById('totalShares').innerText = shares;
+    document.getElementById('totalShops').innerText = shops;
+    document.getElementById('totalReviews').innerText = reviews;
+  });
+
+  // 2. Listen for bill data and calculate totals
+  db.collection('analytics_bills').onSnapshot(snapshot => {
+    let totalNew = 0;
+    let totalOld = 0;
+    const billCount = snapshot.size;
+
+    snapshot.forEach(doc => {
+        const bill = doc.data();
+        totalNew += bill.newItemsValue || 0;
+        totalOld += bill.oldDeductionValue || 0;
+    });
+
+    document.getElementById('totalBills').innerText = billCount;
+    document.getElementById('totalNewItems').innerText = `₹${totalNew.toFixed(2)}`;
+    document.getElementById('totalOldDeduction').innerText = `₹${totalOld.toFixed(2)}`;
+    document.getElementById('grandTotalDashboard').innerText = `₹${(totalNew - totalOld).toFixed(2)}`;
+  });
+
+  // --- REFACTOR: Listen for Gold Rates from Firestore ---
+  // The Cloud Function will update this document, and the dashboard will listen in real-time.
+  db.collection('goldRates').doc('latest').onSnapshot(doc => {
+    if (doc.exists) {
+      const rates = doc.data();
+      document.getElementById('goldRate24K').innerText = `₹${(rates.rate24K || 0).toFixed(2)}`;
+      document.getElementById('goldRate22K').innerText = `₹${(rates.rate22K || 0).toFixed(2)}`;
+      document.getElementById('goldRate20K').innerText = `₹${(rates.rate20K || 0).toFixed(2)}`;
+    } else {
+      console.log("No gold rate data found. Waiting for Cloud Function to run.");
+      document.getElementById('goldRate24K').innerText = 'Waiting for data...';
+      document.getElementById('goldRate22K').innerText = 'Waiting for data...';
+      document.getElementById('goldRate20K').innerText = 'Waiting for data...';
+    }
+  }, error => {
+    console.error("Error listening to gold rates: ", error);
+    document.getElementById('goldRate24K').innerText = 'Error';
+    document.getElementById('goldRate22K').innerText = 'Error';
+    document.getElementById('goldRate20K').innerText = 'Error';
+  });
+
+  // --- Blog Management ---
+  const blogCollection = db.collection('blogs');
+
+  window.addBlogPost = function() {
+    const title = document.getElementById('blogTitle').value;
+    const content = document.getElementById('blogContent').value;
+    if (!title || !content) {
+      alert('Please enter both title and content for the blog post.');
+      return;
+    }
+    blogCollection.add({
+      title: title,
+      content: content,
+      date: new Date().toISOString().slice(0, 10)
+    }).then(() => {
+      alert('Blog post added successfully!');
+      document.getElementById('blogTitle').value = '';
+      document.getElementById('blogContent').value = '';
+    }).catch(error => console.error("Error adding blog post: ", error));
+  };
+
+  window.deleteBlogPost = function(id) {
+    if (confirm('Are you sure you want to delete this blog post?')) {
+      blogCollection.doc(id).delete();
+    }
+  };
+
+  // Listen for blog posts and display them
+  blogCollection.orderBy('date', 'desc').onSnapshot(snapshot => {
+    const blogListDiv = document.getElementById('blogList');
+    let html = '<h4>Existing Blogs:</h4>';
+    if (snapshot.empty) {
+      html += '<p>No blog posts found.</p>';
+    } else {
+      snapshot.forEach(doc => {
+        const blog = doc.data();
+        html += `<div class="blog-list-item"><span><strong>${blog.title}</strong> (${blog.date})</span><button onclick="deleteBlogPost('${doc.id}')">Delete</button></div>`;
+      });
+    }
+    blogListDiv.innerHTML = html;
+  });
+
+  // --- User Reviews Management ---
+  const reviewCollection = db.collection('reviews');
+
+  window.deleteReview = function(id) {
+    if (confirm('Are you sure you want to delete this review?')) {
+      reviewCollection.doc(id).delete();
+    }
+  };
+
+  // Listen for reviews and display them
+  reviewCollection.orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+    const reviewListDiv = document.getElementById('reviewList');
+    if (snapshot.empty) {
+      reviewListDiv.innerHTML = '<p>No reviews submitted yet.</p>';
+      return;
+    }
+
+    let html = '';
+    snapshot.forEach(doc => {
+      const review = doc.data();
+      // Format date nicely if it exists
+      const date = review.createdAt ? new Date(review.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
+      
+      html += `<div class="review-list-item">
+                 <p>"${review.content}"</p>
+                 <small>${date}</small>
+                 <button onclick="deleteReview('${doc.id}')">Delete</button>
+               </div>`;
+    });
+    reviewListDiv.innerHTML = html;
+  });
+
+});</script>
+
+</body>
+</html>

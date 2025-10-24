@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login</title>
+<style>
+body { font-family: 'Poppins', sans-serif; background: #f5f6fa; margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; }
+.login-container { background:#fff; padding:30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); max-width:400px; width:90%; text-align:center; }
+h2 { color:#222; margin-bottom:20px; }
+label { display:block; text-align:left; margin-bottom:5px; font-weight:600; }
+input[type="email"], input[type="password"] { width:calc(100% - 20px); padding:10px; margin-bottom:15px; border-radius:6px; border:1px solid #ccc; }
+button { background:#ffd700; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:16px; }
+button:hover { background:#ffc107; }
+.google-btn { background: #4285F4; color: white; margin-top: 10px; }
+.google-btn:hover { background: #357ae8; }
+.error-message { color:red; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div class="login-container">
+  <h2>Admin Login</h2>
+  <form id="loginForm">
+    <label for="email">Email:</label>
+    <input type="email" id="email" required>
+    <label for="password">Password:</label>
+    <input type="password" id="password" required>
+    <button type="submit">Login</button>
+    <p id="errorMessage" class="error-message"></p>
+    <button type="button" id="googleSignInBtn" class="google-btn">Sign in with Google</button>
+  </form>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script> <!-- Auth -->
+<script src="firebase-init.js"></script> <!-- Your centralized Firebase config -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {  
+  const auth = firebase.auth();
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = ''; // Clear previous errors
+
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      // Redirect to dashboard on successful login
+      window.location.href = 'dashboard.html';
+    } catch (error) {
+      console.error("Login Error:", error.message);
+      errorMessage.textContent = "Login failed: " + error.message;
+    }
+  });
+
+  // --- Google Sign-In ---
+  document.getElementById('googleSignInBtn').addEventListener('click', () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then((result) => {
+        // On successful sign-in, redirect to dashboard
+        window.location.href = 'dashboard.html';
+      }).catch((error) => {
+        // Handle Errors here.
+        console.error("Google Sign-In Error:", error.message);
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = "Google Sign-In Failed: " + error.message;
+      });
+  });
+
+  // If user is already logged in, redirect to dashboard
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      window.location.href = 'dashboard.html';
+    }
+  });
+});</script>
+
+</body>
+</html>

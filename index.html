@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jewellery Calculator</title>
+<style>
+body { font-family:'Poppins',sans-serif; background:#f5f6fa; margin:0; color:#222; }
+header { background:#ffd700; padding:15px; text-align:center; font-weight:bold; font-size:24px; }
+.container { max-width:750px; margin:15px auto; background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+label { display:block; margin-top:8px; font-weight:600; }
+input, select, textarea { width:100%; padding:8px; margin-top:4px; border-radius:6px; border:1px solid #ccc; }
+button { background:#ffd700; border:none; padding:10px 15px; margin-top:12px; border-radius:6px; font-weight:bold; cursor:pointer; }
+button.secondary { background:#eee; }
+.flex { display:flex; gap:8px; flex-wrap:wrap; }
+.flex > div { flex:1; }
+.flex-center { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:15px; }
+#billPreview { margin-top:15px; background:#fff3cd; padding:10px; border-radius:8px; }
+.item-actions button { margin-right:5px; padding:6px 10px; }
+.ad-section { background:#e0f7fa; text-align:center; border-radius:8px; padding:12px; margin:15px 0; font-weight:bold; font-size:16px; border:2px dashed #00bcd4; width:100%; height:50px; line-height:50px; }
+.carat-flex { display:flex; gap:8px; margin-top:5px; }
+.carat-flex > div { flex:1; }
+</style>
+<style> /* Additional styles for anchor tags to look like buttons */
+  .flex a.button-link { background:#ffd700; border:none; padding:10px 15px; margin-top:12px; border-radius:6px; font-weight:bold; cursor:pointer; text-decoration:none; color:#222; text-align:center; display:block; }
+  .flex a.button-link:hover { background:#ffc107; } /* Slightly darker on hover */
+</style>
+<!-- 1. Include the jsPDF library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- 2. Include Firebase libraries -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script> <!-- Firebase App Core -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script> <!-- Firestore -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script> <!-- Auth (for consistency) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics-compat.js"></script> <!-- Analytics (for consistency) -->
+<script src="firebase-init.js"></script> <!-- Your centralized Firebase config -->
+
+</head>
+
+<body>
+
+<header>💎 Jewellery Calculator</header>
+
+<div class="ad-section" id="topAd" style="height:150px;">* Top Ad: Special Offers on Jewellery! *</div>
+
+<div class="container">
+<h3>Gold Rate (per gram)</h3>
+<label>24K Rate</label>
+<input type="number" id="rate24" value="7200" oninput="updateCaratRates()" min="0">
+
+<div class="carat-flex">
+  <div><label>24K</label><input type="number" id="rate24k" readonly></div>
+  <div><label>23K</label><input type="number" id="rate23" readonly></div>
+  <div><label>22K</label><input type="number" id="rate22" readonly></div>
+</div>
+<div class="carat-flex">
+  <div><label>20K</label><input type="number" id="rate20" readonly></div>
+  <div><label>18K</label><input type="number" id="rate18" readonly></div>
+  <div><label>14K</label><input type="number" id="rate14" readonly></div>
+  <div><label>9K</label><input type="number" id="rate9" readonly></div>
+</div>
+</div>
+
+<div class="container">
+<h3>Silver Rate (per gram)</h3>
+<div class="flex" oninput="updateSilverRate()">
+  <div><label>99.99% Rate</label><input type="number" id="silverPure" value="80" min="0"></div>
+  <div><label>Custom %</label><input type="number" id="silverPercent" placeholder="Enter %" min="0"></div>
+  <div><label>Calculated Rate</label><input type="number" id="silverCalc" readonly min="0"></div>
+</div>
+
+<div class="ad-section" id="silverAd" style="height:100px;">* Silver Ad: Latest Market Rates *</div>
+</div>
+
+<div class="container">
+<h3>Jewellery Billing</h3>
+<label>Item Name</label>
+<input id="itemName" placeholder="e.g. Necklace, Ring">
+
+<label>Type</label>
+<select id="itemType" onchange="setDefaultCarat()">
+  <option value="gold">Gold</option>
+  <option value="silver">Silver</option>
+</select>
+
+<label>Carat / %</label>
+<select id="carat">
+  <option value="24">24K</option>
+  <option value="23">23K</option>
+  <option value="22">22K</option>
+  <option value="20">20K</option>
+  <option value="18">18K</option>
+  <option value="14">14K</option>
+  <option value="9">9K</option>
+</select>
+
+<label>Weight (grams)</label>
+<input type="number" id="weight" value="1" step="0.01">
+
+<label>Making Charge</label>
+<input type="number" id="makingValue" value="100" min="0">
+
+<select id="makingType">
+  <option value="pergram">₹/gram</option>
+  <option value="percent">%</option>
+</select>
+
+<label>GST (%)</label>
+<input type="number" id="gst" value="3" min="0">
+</div>
+
+<hr>
+<h4>Old Jewellery</h4>
+<label>Total Weight</label><input type="number" id="oldWeight" value="0" step="0.01" min="0">
+<label>Jalan Weight</label><input type="number" id="oldJalan" value="0" step="0.01" min="0">
+<label>Manual Rate</label><input type="number" id="oldRate" value="0" step="0.01" min="0">
+
+<div class="flex-center">
+<button onclick="addItem()">Add Item</button>
+<button onclick="newBill()" class="secondary">New Bill</button>
+<button onclick="saveBill()">Save & Print</button>
+<button onclick="shareWhatsApp()">WhatsApp Share</button>
+<button onclick="exportPDF()" class="secondary">Export as PDF</button>
+<button onclick="showHistory()">Bill History</button>
+</div>
+
+<div id="historyPreview" class="container" style="display:none; margin-top: 15px;"></div>
+
+<div class="ad-section" id="billAd" style="height:150px;">* Bill Total Ad: Earn Loyalty Points! *</div>
+
+<div id="billPreview"></div>
+
+<div class="container">
+<h3>Customer Review</h3>
+<textarea id="starReview" rows="3" placeholder="Write your review here..."></textarea>
+<button onclick="submitReview()">Submit Feedback</button>
+
+<div class="ad-section" id="reviewAd" style="height:150px;">* Review Section Ad: Get Discounts on Next Purchase! *</div>
+</div>
+
+<div class="container">
+<h3>Shop Details (Registration)</h3>
+<label>Shop Name</label><input id="shopName" placeholder="Enter shop name">
+<label>Address</label><input id="shopAddress" placeholder="Enter shop address">
+<label>GST No.</label><input id="shopGST" placeholder="Enter GST number">
+<label>Contact</label><input id="shopContact" placeholder="Enter contact number">
+<button onclick="shopRegister()">Save Shop Details</button>
+</div>
+
+<div class="container">
+  <h3>💰 Investment Options</h3>
+  <div class="flex">
+    <button onclick="alert('Gold ETF')">Gold ETF</button>
+    <button onclick="alert('Sovereign Gold Bond')">Sovereign Gold Bond</button>
+    <button onclick="alert('Physical Coin / Bar')">Physical Coin / Bar</button>
+    <button onclick="alert('Digital Gold')">Digital Gold</button>
+  </div>
+</div>
+
+<div class="container">
+  <h3>📂 Additional Tools & Pages</h3>
+  <div class="flex">
+    <a href="dashboard.html" class="button-link">📊 Dashboard</a>
+    <a href="blog.html" class="button-link">📰 Blog</a>
+    <a href="help.html" class="button-link">❓ Help</a>
+    <a href="about.html" class="button-link">👤 About Us</a>
+    <a href="terms.html" class="button-link">📄 Terms & Conditions</a>
+    <a href="privacy.html" class="button-link">🔒 Privacy Policy</a>
+  </div>
+</div>
+
+<script>
+let items=[];
+let billsHistory=[];
+
+// FIX: Old Jewellery logic change to ensure deduction happens on grand total
+let oldJewellery = {weight: 0, jalan: 0, rate: 0, total: 0};
+
+function updateCaratRates(){
+  let rate24=parseFloat(document.getElementById('rate24').value)||0;
+  document.getElementById('rate24k').value=rate24.toFixed(2);
+  document.getElementById('rate23').value=(rate24*23/24).toFixed(2);
+  document.getElementById('rate22').value=(rate24*22/24).toFixed(2);
+  document.getElementById('rate20').value=(rate24*20/24).toFixed(2);
+  document.getElementById('rate18').value=(rate24*18/24).toFixed(2);
+  document.getElementById('rate14').value=(rate24*14/24).toFixed(2);
+  document.getElementById('rate9').value=(rate24*9/24).toFixed(2);
+}
+
+function updateSilverRate(){
+  let pure=parseFloat(document.getElementById('silverPure').value)||0;
+  let pct=parseFloat(document.getElementById('silverPercent').value)||0;
+  // If no custom percentage is entered, use 100% (the pure rate) as the calculated rate.
+  let finalRate = (pct > 0) ? (pure * pct / 100) : pure;
+  document.getElementById('silverCalc').value = finalRate.toFixed(2);
+}
+
+function setDefaultCarat(){
+  let type=document.getElementById('itemType').value;
+  document.getElementById('carat').value=type==='gold'?'24':'';
+}
+
+function addItem(){
+  let type=document.getElementById('itemType').value;
+  let itemName=document.getElementById('itemName').value||'Jewellery Item';
+  let carat=document.getElementById('carat').value;
+  let weight=parseFloat(document.getElementById('weight').value)||0;
+  let makingVal=parseFloat(document.getElementById('makingValue').value)||0;
+  let makingType=document.getElementById('makingType').value;
+  let gst=parseFloat(document.getElementById('gst').value)||0;
+  
+  let rate=0;
+  if(type==='gold') rate=parseFloat(document.getElementById('rate'+carat).value)||0;
+  else if(type==='silver') rate=parseFloat(document.getElementById('silverCalc').value)||0;
+  
+  let baseAmount=rate*weight;
+ let makingCharge = (makingType === 'pergram') ? makingVal * weight : (baseAmount * makingVal / 100);
+  let subtotal=baseAmount+makingCharge;
+  let gstAmt=subtotal*gst/100;
+  let total=subtotal+gstAmt;
+  // FIX: Old Jewellery details ko global object mein save karein, item mein nahi
+  oldJewellery.weight=parseFloat(document.getElementById('oldWeight').value)||0;
+  oldJewellery.jalan=parseFloat(document.getElementById('oldJalan').value)||0;
+  oldJewellery.rate=parseFloat(document.getElementById('oldRate').value)||0;
+  
+  // FIX: Save original making charge values for editing
+  items.push({itemName,type,carat,weight,rate,makingCharge,subtotal,gstAmt,total, makingValue: makingVal, makingType: makingType});
+  // Clear input fields after adding an item for better UX
+  document.getElementById('itemName').value = '';
+  document.getElementById('weight').value = '1';
+  renderBill();
+}
+
+function renderBill(){
+  let html='';
+  let grandTotal=0;
+  let oldTotal=0;
+  
+  // 1. New Items ka Total
+  items.forEach((i,idx)=>{
+    grandTotal+=i.total;
+    html += `<b>Item ${idx+1}:</b> ${i.itemName} (${i.type})<br>
+             Carat/%: ${i.carat}<br>
+             Weight: ${i.weight} gm<br>
+             Rate/gm: ₹${i.rate.toFixed(2)}<br>
+             Making: ₹${i.makingCharge.toFixed(2)}, Subtotal: ₹${i.subtotal.toFixed(2)}, GST: ₹${i.gstAmt.toFixed(2)}, Total: ₹${i.total.toFixed(2)}<br>
+             <div class="item-actions"><button onclick="editItem(${idx})">Edit</button><button onclick="deleteItem(${idx})">Delete</button></div><hr>`;
+  });
+  
+  let deductionText = '';
+  
+  // 2. Old Jewellery Deduction (Grand Total par lagao)
+  if(oldJewellery.weight>0 && oldJewellery.rate>0){
+    let netWeight=oldJewellery.weight-oldJewellery.jalan;
+    oldTotal=netWeight*oldJewellery.rate;
+    grandTotal -= oldTotal;
+    deductionText += `<p style="color:red; font-weight:bold;">Old Jewellery Deduction (Net Weight: ${(netWeight).toFixed(2)}g): - ₹${oldTotal.toFixed(2)}</p>`;
+    oldJewellery.total = oldTotal; // Store the calculated total for print/share
+  }
+
+  // 3. Final Display
+  html += `<h3>New Items Subtotal: ₹${(grandTotal+oldTotal).toFixed(2)}</h3>`;
+  html += deductionText;
+  html += `<h2>Grand Total Payable: ₹${grandTotal.toFixed(2)}</h2>`;
+  document.getElementById('billPreview').innerHTML=html;
+}
+
+
+// --- REST OF THE FUNCTIONS (Cleaned & Fixed for Local Storage/Sharing) ---
+
+function editItem(idx){
+  let i=items[idx];
+  document.getElementById('itemName').value=i.itemName;
+  document.getElementById('itemType').value=i.type;
+  document.getElementById('weight').value=i.weight;
+  document.getElementById('gst').value = i.subtotal > 0 ? (i.gstAmt / i.subtotal * 100).toFixed(2) : 0; // Calculate back the GST percentage
+  document.getElementById('makingValue').value = i.makingValue; // Restore original making value from the item object
+  document.getElementById('makingType').value = i.makingType; // Restore original making type
+
+  setDefaultCarat(); // Ensure carat dropdown is correct for the item type
+  document.getElementById('carat').value=i.carat; // Set carat after type is set
+  items.splice(idx,1);
+  renderBill();
+}
+
+function deleteItem(idx){
+  items.splice(idx,1);
+  renderBill();
+}
+
+function newBill(){
+  // Save the current bill to history before starting a new one
+  if(items.length>0) {
+    let billToSave = { items: JSON.parse(JSON.stringify(items)), old: JSON.parse(JSON.stringify(oldJewellery)) };
+    billsHistory.push(billToSave);
+    localStorage.setItem('billsHistory', JSON.stringify(billsHistory)); // Update local storage
+  }
+  items=[];
+  oldJewellery = {weight: 0, jalan: 0, rate: 0, total: 0}; // Reset Old Jewellery
+  // Optional: Reset old jewellery input fields
+  document.getElementById('oldWeight').value = 0;
+  document.getElementById('oldJalan').value = 0;
+  document.getElementById('oldRate').value = 0;
+  renderBill();
+}
+
+function saveBill(){
+  if(items.length===0){ alert('Add items first'); return; }
+  
+  // Save the current bill to history
+  let billToSave = { items: JSON.parse(JSON.stringify(items)), old: JSON.parse(JSON.stringify(oldJewellery)) };
+  billsHistory.push(billToSave);
+  localStorage.setItem('billsHistory', JSON.stringify(billsHistory));
+
+  // REFACTOR: Log bill to Firestore for global analytics
+  const newItemsTotal = items.reduce((acc, i) => acc + i.total, 0);
+  const oldItemsTotal = oldJewellery.total || 0;
+  db.collection('analytics_bills').add({
+      newItemsValue: newItemsTotal,
+      oldDeductionValue: oldItemsTotal,
+      grandTotal: newItemsTotal - oldItemsTotal,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  
+  printBill();
+  alert('Bill saved!');
+}
+
+function printBill(){
+  let win=window.open('', '_blank');
+  // FIX: Shop details Local Storage se load ho rahe hain
+  let shopName=localStorage.getItem('shopName') || document.getElementById('shopName').value || 'Jewellery Shop';
+  let shopAddress=localStorage.getItem('shopAddress') || '';
+  let customerName=prompt('Enter Customer Name','Customer')||'Customer';
+  let shopGST=localStorage.getItem('shopGST') || '';
+  let shopContact=localStorage.getItem('shopContact') || '';
+  let billDate=new Date().toLocaleDateString();
+  
+  win.document.write(`<h1 style="text-align:center">${shopName}</h1>`);
+  if(shopAddress) win.document.write(`<p style="text-align:center">${shopAddress}</p>`);
+  if(shopContact || shopGST) win.document.write(`<p style="text-align:center">Contact: ${shopContact} | GSTIN: ${shopGST}</p>`);
+  win.document.write(`<p style="text-align:center">Customer: ${customerName} | Date: ${billDate}</p><hr>`);
+  win.document.write(document.getElementById('billPreview').innerHTML);
+  win.print();
+}
+
+function shareWhatsApp(){
+  if(items.length === 0){ 
+    alert('Bill mein koi item nahi hai.'); 
+    return; 
+  }
+
+  let shopName = localStorage.getItem('shopName') || 'Jewellery Shop';
+  let newItemsTotal = items.reduce((acc, i) => acc + i.total, 0);
+
+  if (oldJewellery.weight > 0 && oldJewellery.rate > 0) {
+      oldJewellery.total = (oldJewellery.weight - oldJewellery.jalan) * oldJewellery.rate;
+  }
+
+  let grandTotal = newItemsTotal - (oldJewellery.total || 0);
+
+  let billText = `*${shopName} Bill Details*\n\n`;
+  items.forEach((item, index) => {
+    billText += `*Item ${index + 1}:* ${item.itemName} (${item.type} ${item.carat}) - ${item.weight}g\n`;
+    billText += `  Total: ₹${item.total.toFixed(2)}\n\n`;
+});
+  billText += `*New Items Total:* ₹${newItemsTotal.toFixed(2)}\n`;
+  billText += `*Old Jewellery Deduction:* - ₹${(oldJewellery.total || 0).toFixed(2)}\n\n`;
+  billText += `*Grand Total Payable:* ₹${grandTotal.toFixed(2)}\n`;
+
+  let url = "https://wa.me/?text=" + encodeURIComponent(billText);
+  window.location.href = url;
+
+  // REFACTOR: Log WhatsApp share event to Firestore
+  db.collection('analytics_events').add({ type: 'whatsapp_share', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+}
+
+function showHistory(){
+  let history = JSON.parse(localStorage.getItem('billsHistory')) || [];
+  let historyDiv = document.getElementById('historyPreview');
+  
+  if (history.length === 0) {
+    alert('No bills saved yet.');
+    return;
+  }
+
+  let historyHtml = '<h3>Bill History</h3>';
+  history.forEach((b,i)=>{
+    let totalItemsValue = b.items.reduce((acc, itm) => acc + itm.total, 0);
+    let finalTotal = totalItemsValue - (b.old.total || 0);
+
+    historyHtml += `<p><b>Bill ${i+1}:</b> Items Total: ₹${totalItemsValue.toFixed(2)};`;
+    if(b.old.total > 0) historyHtml += ` | Deduction: ₹${b.old.total.toFixed(2)}`;
+    historyHtml += ` | <b>Final Total: ₹${finalTotal.toFixed(2)}</b></p><hr>`;
+  });
+  historyDiv.innerHTML = historyHtml;
+  historyDiv.style.display = 'block';
+}
+
+function shopRegister(){
+  // FIX: Ab sabhi shop details save honge
+  let shopName = document.getElementById('shopName').value || 'Jewellery Shop';
+  localStorage.setItem('shopName', shopName);
+  localStorage.setItem('shopAddress', document.getElementById('shopAddress').value);
+  localStorage.setItem('shopGST', document.getElementById('shopGST').value);
+  localStorage.setItem('shopContact', document.getElementById('shopContact').value);
+
+  alert('Shop Details Saved: ' + shopName);
+
+  // REFACTOR: Log shop registration event to Firestore
+  db.collection('analytics_events').add({ type: 'shop_registered', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+}
+
+function exportPDF() {
+  if (items.length === 0) {
+    alert('Cannot export an empty bill. Please add items first.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20; // Y-position cursor
+
+  // --- Shop Details ---
+  const shopName = localStorage.getItem('shopName') || 'Jewellery Shop';
+  const shopAddress = localStorage.getItem('shopAddress') || '';
+  const shopContact = localStorage.getItem('shopContact') || '';
+  const shopGST = localStorage.getItem('shopGST') || '';
+
+  // --- Customer Name ---
+  let customerName = prompt('Enter Customer Name for PDF', 'Customer') || 'Customer';
+  let billDate = new Date().toLocaleDateString();
+
+  doc.setFontSize(20).setFont(undefined, 'bold');
+  doc.text(shopName, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
+  y += 8;
+  doc.setFontSize(10).setFont(undefined, 'normal');
+  if (shopAddress) {
+    doc.text(`${shopAddress}`, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
+    y += 5;
+  }
+  if (shopContact) {
+    doc.text(`Contact: ${shopContact} | GSTIN: ${shopGST}`, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
+    y += 5;
+  }
+  y += 5;
+  doc.line(10, y, 200, y); // Horizontal line
+  y += 10;
+
+  // --- Bill Items ---
+  doc.setFontSize(12).setFont(undefined, 'bold');
+  doc.text('Bill Details', 10, y);
+  y += 7;
+  doc.setFontSize(10).setFont(undefined, 'normal');
+  let newItemsTotal = 0;
+  items.forEach((i, idx) => {
+    doc.text(`Item ${idx + 1}: ${i.itemName} (${i.type}, ${i.carat}) - ${i.weight}g @ ₹${i.rate.toFixed(2)}/g`, 15, y); // Line 445
+    doc.text(`₹${i.total.toFixed(2)}`, 195, y, { align: 'right' });
+    y += 6;
+    newItemsTotal += i.total;
+  });
+
+  y += 5;
+  doc.line(10, y, 200, y); // Horizontal line
+  y += 7;
+
+  // --- Totals ---
+  doc.setFontSize(12).setFont(undefined, 'bold');
+  doc.text('New Items Total:', 15, y);
+  doc.text(`₹${newItemsTotal.toFixed(2)}`, 195, y, { align: 'right' });
+  y += 7;
+
+  let grandTotal = newItemsTotal;
+
+  if (oldJewellery.total > 0) {
+    doc.setFont(undefined, 'normal');
+    doc.text('Old Jewellery Deduction:', 15, y);
+    doc.text(`- ₹${oldJewellery.total.toFixed(2)}`, 195, y, { align: 'right' });
+    grandTotal -= oldJewellery.total;
+    y += 7;
+  }
+
+  doc.setFont(undefined, 'bold');
+  doc.text('Grand Total Payable:', 15, y);
+  doc.text(`₹${grandTotal.toFixed(2)}`, 195, y, { align: 'right' });
+
+  doc.save(`Bill-${shopName}-${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+function submitReview(){
+  const reviewText = document.getElementById('starReview').value.trim();
+  if (!reviewText) {
+    alert('Please write a review before submitting.');
+    return;
+  }
+
+  // 1. Save the actual review content to a 'reviews' collection
+  db.collection('reviews').add({
+    content: reviewText,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    // 2. Log the submission event for analytics counting
+    db.collection('analytics_events').add({ type: 'review_submitted', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    
+    alert('Thank you for your feedback!');
+    document.getElementById('starReview').value = '';
+  }).catch(error => {
+    console.error("Error submitting review: ", error);
+    alert('Sorry, there was an error submitting your review. Please try again.');
+  });
+}
+
+// FIX: Initialize function theek kiya gaya hai
+window.onload=function(){
+  updateCaratRates();
+  updateSilverRate();
+  
+  // 1. Bill History Load karna
+  billsHistory = JSON.parse(localStorage.getItem('billsHistory')) || [];
+  
+  // 2. Shop Details Load karna
+  document.getElementById('shopName').value = localStorage.getItem('shopName') || '';
+  document.getElementById('shopAddress').value = localStorage.getItem('shopAddress') || '';
+  document.getElementById('shopGST').value = localStorage.getItem('shopGST') || '';
+  document.getElementById('shopContact').value = localStorage.getItem('shopContact') || '';
+
+  // REFACTOR: Log a visitor/app usage event to Firestore
+  db.collection('analytics_events').add({ type: 'visitor', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+};
+</script>
+
+</body>
+</html>
