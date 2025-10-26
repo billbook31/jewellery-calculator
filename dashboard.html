@@ -21,6 +21,12 @@ h1,h3 { text-align:center; }
 .review-list-item p { margin: 0; flex-grow: 1; font-style: italic; }
 .review-list-item small { color: #777; margin-left: 15px; flex-shrink: 0; }
 .review-list-item button { background: #c82333; font-size: 12px; padding: 5px 8px; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 15px; }
+.shop-management-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+.shop-management-table th, .shop-management-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+.shop-management-table th { background-color: #f2f2f2; }
+.shop-management-table button { font-size: 12px; padding: 4px 8px; margin-right: 4px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; }
+.shop-management-table select { padding: 4px; }
+.config-section input { width: 80%; }
 
 </style>
 </head>
@@ -53,6 +59,17 @@ h1,h3 { text-align:center; }
   AdSense Slot Here (Online) / Offline Ads Placeholder
 </div>
 
+<div class="container">
+  <h3>Top Ad Management</h3>
+  <p>यहां आप मुख्य पेज के टॉप पर दिखने वाला वीडियो सेट कर सकते हैं। जब तक AdSense अप्रूव नहीं होता, तब तक यह वीडियो दिखेगा।</p>
+  <label>Video URL (e.g., Instagram, direct link)</label>
+  <input type="text" id="topAdVideoUrl" placeholder="Enter video URL or upload a file below">
+  <label>Or Upload Video File</label>
+  <input type="file" id="topAdVideoFile" accept="video/*">
+  <button onclick="saveTopAdConfig()">Save Top Ad Video</button>
+  <small id="uploadStatus" style="display:block; margin-top:8px;"></small>
+</div>
+
 <div class="blog-section">
   <h3>Blog & SEO Management</h3>
   <input type="text" id="blogTitle" placeholder="Blog Title">
@@ -71,11 +88,34 @@ h1,h3 { text-align:center; }
   </div>
 </div>
 
+<div class="container">
+  <h3>Shop Management</h3>
+  <div id="shopListContainer">
+    <!-- Registered shops will be listed here -->
+  </div>
+</div>
+
+<div class="container config-section">
+  <h3>⚙️ Configuration</h3>
+  <label>AdSense Client ID (ca-pub-xxxxxxxxxxxxxxxx)</label>
+  <input type="text" id="adsenseClientId" placeholder="Enter your AdSense Client ID">
+  <hr style="margin: 15px 0;">
+  <label>Razorpay Key ID</label>
+  <input type="text" id="razorpayKeyId" placeholder="Enter your Razorpay Key ID">
+  <label>Razorpay Key Secret</label>
+  <input type="password" id="razorpayKeySecret" placeholder="Enter your Razorpay Key Secret">
+  
+  <button onclick="saveConfig()">Save Configuration</button>
+</div>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics-compat.js"></script> <!-- Analytics -->
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="firebase-init.js"></script> <!-- Your centralized Firebase config -->
 
 <script>
@@ -241,6 +281,126 @@ document.addEventListener('DOMContentLoaded', function() {
     reviewListDiv.innerHTML = html;
   });
 
+  // --- Shop Management ---
+  const shopCollection = db.collection('registered_shops');
+
+  window.toggleShopStatus = function(shopId, field, currentValue) {
+      const newValue = !currentValue;
+      shopCollection.doc(shopId).update({ [field]: newValue })
+          .then(() => console.log(`Shop ${shopId} ${field} updated to ${newValue}`))
+          .catch(error => console.error("Error updating shop status: ", error));
+  };
+
+  // Listen for shop data and display it
+  shopCollection.onSnapshot(snapshot => {
+      const shopListDiv = document.getElementById('shopListContainer');
+      if (snapshot.empty) {
+          shopListDiv.innerHTML = '<p>No shops registered yet.</p>';
+          return;
+      }
+      let tableHtml = '<table class="shop-management-table"><tr><th>Shop Name</th><th>Contact / Email</th><th>Status</th><th>Catalogue Plan</th><th>Actions</th></tr>';
+      snapshot.forEach(doc => {
+          const shop = doc.data();
+          const shopId = doc.id;
+          tableHtml += `
+              <tr>
+                  <td>${shop.name || 'N/A'}</td>
+                  <td>${shop.contact}<br><small>${shop.email || 'No Email'}</small></td>
+                  <td>
+                      ${shop.isLive ? '<b>Live</b>' : 'Not Live'}<br>
+                      ${shop.isVerified ? '<b>Verified</b>' : 'Not Verified'}<br>
+                      ${shop.isFeatured ? '<b>Featured</b>' : 'Not Featured'}
+                  </td>
+                  <td>
+                      <select onchange="updateCataloguePlan('${shopId}', this.value)">
+                          <option value="none" ${!shop.cataloguePlan || shop.cataloguePlan === 'none' ? 'selected' : ''}>None (0)</option>
+                          <option value="basic" ${shop.cataloguePlan === 'basic' ? 'selected' : ''}>Basic (5)</option>
+                          <option value="standard" ${shop.cataloguePlan === 'standard' ? 'selected' : ''}>Standard (20)</option>
+                          <option value="premium" ${shop.cataloguePlan === 'premium' ? 'selected' : ''}>Premium (50)</option>
+                      </select>
+                  </td>
+                  <td>
+                      <button onclick="toggleShopStatus('${shopId}', 'isVerified', ${!!shop.isVerified})">Toggle Verified</button>
+                      <button onclick="toggleShopStatus('${shopId}', 'isFeatured', ${!!shop.isFeatured})">Toggle Featured</button>
+                  </td>
+              </tr>`;
+      });
+      tableHtml += '</table>';
+      shopListDiv.innerHTML = tableHtml;
+  });
+
+  window.updateCataloguePlan = function(shopId, plan) {
+      shopCollection.doc(shopId).update({ cataloguePlan: plan })
+          .then(() => console.log(`Shop ${shopId} plan updated to ${plan}`))
+          .catch(error => console.error("Error updating plan: ", error));
+  };
+
+  // --- Configuration Management ---
+  const configRef = db.collection('config').doc('live');
+
+  // Load existing config to show Key ID (but not secret)
+  configRef.get().then(doc => {
+      if (doc.exists) {
+          const data = doc.data();
+          document.getElementById('razorpayKeyId').value = data.razorpay_key_id || '';
+          document.getElementById('adsenseClientId').value = data.adsense_client_id || '';
+      }
+  });
+
+  window.saveConfig = function() {
+      const keyId = document.getElementById('razorpayKeyId').value;
+      const keySecret = document.getElementById('razorpayKeySecret').value;
+      const adsenseId = document.getElementById('adsenseClientId').value;
+
+      const configData = {
+          razorpay_key_id: keyId,
+          adsense_client_id: adsenseId
+      };
+      // Only add secret if it's provided, to avoid overwriting with empty value
+      if (keySecret) {
+          configData.razorpay_key_secret = keySecret;
+      }
+      configRef.set(configData, { merge: true })
+          .then(() => alert('Configuration saved successfully!'))
+          .catch(error => console.error("Error saving config: ", error));
+  };
+
+  // --- Top Ad Video Management ---
+  const storage = firebase.storage();
+
+  window.saveTopAdConfig = async function() {
+      const urlInput = document.getElementById('topAdVideoUrl');
+      const fileInput = document.getElementById('topAdVideoFile');
+      const statusEl = document.getElementById('uploadStatus');
+      const file = fileInput.files[0];
+
+      let videoUrl = urlInput.value.trim();
+
+      // If a file is uploaded, prioritize it
+      if (file) {
+          statusEl.innerText = 'Uploading video... Please wait.';
+          const filePath = `config_ads/top_ad_${Date.now()}_${file.name}`;
+          const fileRef = storage.ref(filePath);
+          try {
+              const snapshot = await fileRef.put(file);
+              videoUrl = await snapshot.ref.getDownloadURL();
+              statusEl.innerText = 'Upload complete! URL has been saved.';
+              urlInput.value = videoUrl; // Show the new URL in the input field
+          } catch (error) {
+              console.error("Error uploading video: ", error);
+              statusEl.innerText = 'Error uploading video. Please try again.';
+              return;
+          }
+      }
+
+      // Save the final URL (either from input or from upload) to Firestore
+      configRef.set({ topAdVideoUrl: videoUrl }, { merge: true })
+          .then(() => {
+              alert('Top Ad video configuration saved!');
+              if (!file) statusEl.innerText = 'URL saved successfully.';
+          })
+          .catch(error => console.error("Error saving ad config: ", error));
+  };
 });</script>
 
 </body>

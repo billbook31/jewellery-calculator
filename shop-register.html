@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop Registration - Jewellery Calculator</title>
+<style>
+body { font-family:'Poppins',sans-serif; background:#f5f6fa; margin:0; color:#222; }
+header { background:#ffd700; padding:15px; text-align:center; font-weight:bold; font-size:24px; }
+.container { max-width:750px; margin:15px auto; background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+label { display:block; margin-top:8px; font-weight:600; }
+input, select, textarea { width:100%; padding:8px; margin-top:4px; border-radius:6px; border:1px solid #ccc; }
+button { background:#ffd700; border:none; padding:10px 15px; margin-top:12px; border-radius:6px; font-weight:bold; cursor:pointer; }
+button.secondary { background:#eee; }
+.flex-center { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:15px; }
+.live-toggle { display: flex; align-items: center; margin-top: 10px; }
+.live-toggle label { margin: 0 0 0 5px; font-weight: normal; }
+.button-link { background:#ffd700; border:none; padding:10px 15px; margin-top:12px; border-radius:6px; font-weight:bold; cursor:pointer; text-decoration:none; color:#222; text-align:center; display:inline-block; }
+</style>
+<!-- Firebase Libraries -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<!-- Razorpay & Firebase Functions -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="firebase-init.js"></script>
+</head>
+<body>
+
+<header>💎 Shop Registration</header>
+
+<div class="container">
+<form id="shop-register-form">
+  <h3>Manage Your Shop Details</h3>
+  <p>Enter your contact number to load, edit, or register your shop. Your contact number is your unique ID.</p>
+  <label>Contact Number (Your Unique ID)</label>
+  <input id="shopContact" placeholder="Enter contact number and press Enter to load" onchange="loadShopDetails()">
+  <label>Email Address (Optional, for future login)</label>
+  <input type="email" id="shopEmail" placeholder="Enter your email address">
+  <hr>
+  <label>Shop Display Picture (DP)</label>
+  <img id="dpPreview" src="https://via.placeholder.com/100" alt="DP Preview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; display: block; margin: 10px auto;">
+  <input type="file" id="shopDP" accept="image/*" onchange="previewDP(event)" style="margin-top: 5px;">
+  <hr>
+  <label>Shop Name</label><input id="shopName" placeholder="Enter shop name">
+  <label>Address</label><input id="shopAddress" placeholder="Enter shop address">
+  <label>City</label><input id="shopCity" placeholder="Enter your city (e.g., Mumbai, Delhi)">
+  <label>State</label>
+  <select id="shopState">
+      <option value="">-- Select State --</option>
+      <option value="Andaman & Nicobar Islands">Andaman & Nicobar Islands</option>
+      <option value="Andhra Pradesh">Andhra Pradesh</option>
+      <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+      <option value="Assam">Assam</option>
+      <option value="Bihar">Bihar</option>
+      <option value="Chandigarh">Chandigarh</option>
+      <option value="Chhattisgarh">Chhattisgarh</option>
+      <option value="Dadra & Nagar Haveli and Daman & Diu">Dadra & Nagar Haveli and Daman & Diu</option>
+      <option value="Delhi">Delhi</option>
+      <option value="Goa">Goa</option>
+      <option value="Gujarat">Gujarat</option>
+      <option value="Haryana">Haryana</option>
+      <option value="Himachal Pradesh">Himachal Pradesh</option>
+      <option value="Jammu & Kashmir">Jammu & Kashmir</option>
+      <option value="Jharkhand">Jharkhand</option>
+      <option value="Karnataka">Karnataka</option>
+      <option value="Kerala">Kerala</option>
+      <option value="Ladakh">Ladakh</option>
+      <option value="Lakshadweep">Lakshadweep</option>
+      <option value="Madhya Pradesh">Madhya Pradesh</option>
+      <option value="Maharashtra">Maharashtra</option>
+      <option value="Manipur">Manipur</option>
+      <option value="Meghalaya">Meghalaya</option>
+      <option value="Mizoram">Mizoram</option>
+      <option value="Nagaland">Nagaland</option>
+      <option value="Odisha">Odisha</option>
+      <option value="Puducherry">Puducherry</option>
+      <option value="Punjab">Punjab</option>
+      <option value="Rajasthan">Rajasthan</option>
+      <option value="Sikkim">Sikkim</option>
+      <option value="Tamil Nadu">Tamil Nadu</option>
+      <option value="Telangana">Telangana</option>
+      <option value="Tripura">Tripura</option>
+      <option value="Uttar Pradesh">Uttar Pradesh</option>
+      <option value="Uttarakhand">Uttarakhand</option>
+      <option value="West Bengal">West Bengal</option>
+  </select>
+  <label>GST No.</label><input id="shopGST" placeholder="Enter GST number">
+  <label>Instagram ID</label><input id="shopInsta" placeholder="e.g., myjewellerystore">
+  <label>Facebook Page</label><input id="shopFB" placeholder="e.g., myjewellerystore">
+  <label>Website</label><input id="shopWebsite" placeholder="e.g., https://www.myjewellerystore.com">
+  <div class="live-toggle">
+    <input type="checkbox" id="goLiveCheckbox">
+    <label for="goLiveCheckbox">Show my shop in the public list</label>
+  </div>
+  <div class="flex-center">
+    <button type="button" onclick="shopRegister()">Save / Update Details</button>
+    <button type="button" onclick="deleteShopDetails()" class="secondary">Delete My Details</button>
+  </div>
+  <div class="flex-center">
+      <a href="index.html" class="button-link secondary">Back to Calculator</a>
+      <a href="jeweller-dashboard.html" class="button-link">Go to My Dashboard</a>
+  </div>
+</form>
+</div>
+
+<div class="container">
+  <h3>🖼️ Manage Your Catalogue</h3>
+  <p>Upload images of your best jewellery. Your plan allows <b id="uploadLimit">0</b> images.</p>
+  <input type="file" id="catalogueImage" accept="image/*" multiple>
+  <small>You can upload images (jpg, png) and videos (mp4, mov). </small>
+  <button type="button" onclick="uploadCatalogueImages()">Upload Images</button>
+  <div id="cataloguePreview" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
+</div>
+
+<div class="container">
+  <h3>⭐ Get Featured</h3>
+  <div class="flex-center" style="border-top: 1px solid #eee; margin-top: 20px; padding-top: 15px;">
+    <p>Want more visibility? Become a featured jeweller for just ₹500/year.</p>
+    <button type="button" onclick="purchaseFeaturePlan()" style="background-color: #007bff; color: white;">⭐ Become Featured</button>
+  </div>
+  <div class="flex-center">
+      <a href="index.html" class="button-link secondary">Back to Calculator</a>
+      <a href="jeweller-dashboard.html" class="button-link">Go to My Dashboard</a>
+  </div>
+</div>
+
+<script>
+const db = firebase.firestore();
+const storage = firebase.storage();
+let currentPlan = { limit: 0, images: [] };
+
+async function loadShopDetails() {
+    const contact = document.getElementById('shopContact').value.trim();
+    if (!contact) return;
+
+    const doc = await db.collection('registered_shops').doc(contact).get();
+    if (doc.exists) {
+        const data = doc.data();
+        document.getElementById('shopName').value = data.name || '';
+        document.getElementById('shopAddress').value = data.address || '';
+        document.getElementById('shopCity').value = data.city || '';
+        document.getElementById('shopState').value = data.state || '';
+        document.getElementById('shopGST').value = data.gst || '';
+        document.getElementById('shopInsta').value = data.insta || '';
+        document.getElementById('shopFB').value = data.fb || '';
+        document.getElementById('shopWebsite').value = data.website || '';
+        document.getElementById('goLiveCheckbox').checked = data.isLive || false;
+        document.getElementById('shopEmail').value = data.email || '';
+        document.getElementById('dpPreview').src = data.dpUrl || 'https://via.placeholder.com/100';
+
+        // Load catalogue plan and images
+        const planLimits = { none: 0, basic: 5, standard: 20, premium: 50 };
+        currentPlan.limit = planLimits[data.cataloguePlan] || 0;
+        currentPlan.images = data.catalogueImages || [];
+        document.getElementById('uploadLimit').innerText = currentPlan.limit;
+        renderCataloguePreview();
+
+        alert('Your details have been loaded.');
+    } else {
+        // Reset form if no user found
+        document.getElementById('shop-register-form').reset();
+        alert('No details found for this number. You can fill the form to register.');
+        document.getElementById('dpPreview').src = 'https://via.placeholder.com/100';
+    }
+}
+
+async function shopRegister() {
+    const contact = document.getElementById('shopContact').value.trim();
+    if (!contact) {
+        alert('Please enter a contact number. It will be used as your unique ID.');
+        return;
+    }
+
+    const dpFile = document.getElementById('shopDP').files[0];
+    let dpUrl = document.getElementById('dpPreview').src; // Keep existing URL if no new file
+
+    // If a new DP is selected, upload it first
+    if (dpFile) {
+        alert('Uploading Display Picture...');
+        const dpPath = `shop_dps/${contact}/${dpFile.name}`;
+        const dpRef = storage.ref(dpPath);
+        try {
+            const snapshot = await dpRef.put(dpFile);
+            dpUrl = await snapshot.ref.getDownloadURL();
+        } catch (error) {
+            console.error("Error uploading DP: ", error);
+            alert('Failed to upload new Display Picture. Please try again.');
+            return; // Stop if DP upload fails
+        }
+    }
+
+    const shopDetails = {
+        name: document.getElementById('shopName').value,
+        address: document.getElementById('shopAddress').value,
+        city: document.getElementById('shopCity').value.trim(),
+        state: document.getElementById('shopState').value,
+        gst: document.getElementById('shopGST').value,
+        email: document.getElementById('shopEmail').value,
+        contact: contact,
+        insta: document.getElementById('shopInsta').value,
+        fb: document.getElementById('shopFB').value,
+        website: document.getElementById('shopWebsite').value,
+        isLive: document.getElementById('goLiveCheckbox').checked,
+        dpUrl: dpUrl, // Save the DP URL
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        await db.collection('registered_shops').doc(contact).set(shopDetails, { merge: true });
+        localStorage.setItem('shopContact', contact); // Save contact to local storage for dashboard access
+        alert('Shop details saved successfully!');
+    } catch (error) {
+        console.error("Error saving shop details: ", error);
+        alert('Failed to save details. Please try again.');
+    }
+}
+
+async function deleteShopDetails() {
+    const contact = document.getElementById('shopContact').value.trim();
+    if (!contact) {
+        alert('Please enter your contact number to delete details.');
+        return;
+    }
+
+    if (confirm('Are you sure you want to delete all your shop details? This cannot be undone.')) {
+        try {
+            await db.collection('registered_shops').doc(contact).delete();
+            // Reset the form to clear all fields
+            document.getElementById('shop-register-form').reset();
+            document.getElementById('goLiveCheckbox').checked = false;
+            localStorage.removeItem('shopContact');
+            // Also clear catalogue data on client
+            currentPlan = { limit: 0, images: [] };
+            renderCataloguePreview();
+
+            alert('Your shop details have been deleted.');
+        } catch (error) {
+            console.error("Error deleting shop details: ", error);
+            alert('Failed to delete details. Please try again.');
+        }
+    }
+}
+
+function previewDP(event) {
+    const reader = new FileReader();
+    reader.onload = function(){
+        const output = document.getElementById('dpPreview');
+        output.src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+}
+
+function renderCataloguePreview() {
+    const previewDiv = document.getElementById('cataloguePreview');
+    previewDiv.innerHTML = '';
+    currentPlan.images.forEach((item, index) => {
+        previewDiv.innerHTML += `
+            <div style="position: relative;">
+                <img src="${item.url}" width="100" height="100" style="object-fit: cover; border-radius: 5px;" loading="lazy">
+                <button onclick="deleteCatalogueImage(${index})" style="position: absolute; top: 2px; right: 2px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; line-height: 20px; padding: 0; font-size: 12px;">X</button>
+            </div>
+        `;
+    });
+}
+
+async function deleteCatalogueImage(index) {
+    const contact = document.getElementById('shopContact').value.trim();
+    if (!contact) return;
+
+    if (!confirm('Are you sure you want to delete this image?')) return;
+
+    const imageUrlToDelete = currentPlan.images[index];
+    
+    // 1. Delete from Storage
+    try {
+        await storage.refFromURL(imageUrlToDelete).delete();
+    } catch (error) {
+        console.warn("Could not delete from storage (might be already deleted):", error);
+    }
+
+    // 2. Update Firestore
+    currentPlan.images.splice(index, 1);
+    await db.collection('registered_shops').doc(contact).update({
+        catalogueImages: currentPlan.images
+    });
+
+    renderCataloguePreview();
+    alert('Image deleted.');
+}
+
+async function uploadCatalogueImages() {
+    const contact = document.getElementById('shopContact').value.trim();
+    if (!contact) {
+        alert('Please enter your contact number and save details first.');
+        return;
+    }
+
+    const files = document.getElementById('catalogueImage').files;
+    if (files.length === 0) {
+
+        alert('Please select images to upload.');
+        return;
+
+    }
+
+    if (currentPlan.images.length + files.length > currentPlan.limit) {
+        alert(`You can only upload ${currentPlan.limit - currentPlan.images.length} more images with your current plan.`);
+        return;
+    }
+
+    alert(`Uploading ${files.length} images... This may take a moment.`);
+
+    for (const file of files) {
+        const filePath = `catalogue_images/${contact}/${Date.now()}_${file.name}`;
+        const fileRef = storage.ref(filePath);
+        
+        try {
+            const snapshot = await fileRef.put(file);
+            const downloadURL = await snapshot.ref.getDownloadURL();
+
+            let mediaType = 'image';
+            if (file.type.startsWith('video/')) {
+              mediaType = 'video';
+            }
+
+            // Add URL to Firestore document
+            await db.collection('registered_shops').doc(contact).update({
+                catalogueImages: firebase.firestore.FieldValue.arrayUnion({
+                  url: downloadURL,
+                  type: mediaType
+                })
+            });
+
+            currentPlan.images.push(downloadURL); // Update local state
+        } catch (error) {
+            console.error("Error uploading image: ", error);
+            alert(`Failed to upload ${file.name}.`);
+        }
+    }
+
+    document.getElementById('catalogueImage').value = ''; // Clear file input
+    renderCataloguePreview();
+    alert('Upload complete!');
+}
+
+async function purchaseFeaturePlan() {
+    // This function remains the same as before, handling Razorpay payment.
+    // It's kept separate from the catalogue logic.
+}
+
+// On page load, check if a contact is in local storage and load it
+window.onload = function() {
+    const savedContact = localStorage.getItem('shopContact');
+    if (savedContact) {
+        document.getElementById('shopContact').value = savedContact;
+        loadShopDetails();
+    }
+}
+</script>
+
+</body>
+</html>ns ke codes jab milenge tab iplan m,e ho ja

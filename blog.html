@@ -11,6 +11,7 @@ body {
   margin: 0;
   padding: 20px;
   color: #333;
+  text-align: center; /* Center align text for the whole body */
 }
 .container {
   max-width: 900px;
@@ -40,11 +41,26 @@ h2 {
   font-size: 14px;
   color: #777;
 }
+.ad-section {
+  background: #e0f7fa;
+  text-align: center;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 15px 0;
+  font-weight: bold;
+  font-size: 16px;
+  border: 2px dashed #00bcd4;
+  min-height: 90px;
+}
 </style>
 </head>
 <body>
 <div class="container">
   <h2>Jewellery Blog & Updates</h2>
+  <div class="ad-section" id="topBlogAd">
+    <!-- Ad will be loaded here -->
+    Your Ad Here
+  </div>
   <div id="blogContainer">
     <!-- Blog posts will appear here -->
   </div>
@@ -62,26 +78,47 @@ document.addEventListener('DOMContentLoaded', function() {
   const db = firebase.firestore();
   const container = document.getElementById("blogContainer");
 
-  db.collection('blogs').orderBy('date', 'desc').get().then(snapshot => {
+  // Fetch and display blog posts
+  db.collection('blogs').orderBy('date', 'desc').onSnapshot(snapshot => {
     if (snapshot.empty) {
       container.innerHTML = '<p>No blog posts available at the moment. Please check back later.</p>';
       return;
     }
 
     let html = '';
-    snapshot.forEach(doc => {
+    snapshot.forEach((doc, index) => {
       const blog = doc.data();
       html += `
         <div class="blog-card">
           <h3>${blog.title}</h3>
           <small><i>Published on: ${blog.date}</i></small>
-          <p>${blog.content}</p>
+          <p style="text-align: left;">${blog.content}</p>
         </div>`;
+      
+      // Insert an ad after every 2 blog posts
+      if ((index + 1) % 2 === 0 && index < snapshot.size - 1) {
+        html += `<div class="ad-section">Your Ad Here</div>`;
+      }
     });
     container.innerHTML = html;
   }).catch(error => {
     console.error("Error fetching blogs: ", error);
     container.innerHTML = '<p>Could not load blog posts. Please try again later.</p>';
+  });
+
+  // Dynamically load AdSense script using config from Firebase
+  db.collection('config').doc('live').get().then(doc => {
+      if (doc.exists && doc.data().adsense_client_id) {
+          const adsenseId = doc.data().adsense_client_id;
+          const script = document.createElement('script');
+          script.async = true;
+          script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`;
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
+          console.log('AdSense script loaded for client:', adsenseId);
+      } else {
+        console.log('AdSense Client ID not found in config.');
+      }
   });
 });
 </script>

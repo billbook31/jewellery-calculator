@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jewellery Calculator</title>
+<title>Jewellery Gold Rate Calculator | Live Gold Price India</title>
+<meta name="description" content="Free Jewellery Gold Rate Calculator. Calculate gold, silver, making charges and GST. Get today's live gold rate in India per gram.">
+<meta name="keywords" content="gold calculator India, jewellery making charges calculator, today's gold rate calculator, silver jewellery calculator India, gold rate today India per gram, 22k gold rate calculator, 24k gold calculator India, jewellery GST calculator India, gold jewellery calculator online free, calculate gold value per gram India">
+<meta name="robots" content="index, follow">
+<meta name="language" content="English">
+<meta name="author" content="Ganesh Traders Jewellery Tools">
 <style>
 body { font-family:'Poppins',sans-serif; background:#f5f6fa; margin:0; color:#222; }
 header { background:#ffd700; padding:15px; text-align:center; font-weight:bold; font-size:24px; }
@@ -20,6 +25,71 @@ button.secondary { background:#eee; }
 .ad-section { background:#e0f7fa; text-align:center; border-radius:8px; padding:12px; margin:15px 0; font-weight:bold; font-size:16px; border:2px dashed #00bcd4; width:100%; height:50px; line-height:50px; }
 .carat-flex { display:flex; gap:8px; margin-top:5px; }
 .carat-flex > div { flex:1; }
+/* Styles for Local Jewellers Showcase */
+.showcase-container {
+  display: flex;
+  flex-wrap: wrap; /* Allows cards to wrap to multiple lines */
+  gap: 15px; /* Space between cards */
+  padding: 10px;
+  background: #f0f0f0;
+  border-radius: 8px;
+}
+.jeweller-card { display: inline-block; vertical-align: top; width: 250px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); padding: 15px; white-space: normal; cursor: pointer; transition: transform 0.2s ease; flex-shrink: 0; }
+.jeweller-card:hover { transform: translateY(-5px); }
+.jeweller-card.featured {
+  transform: scale(1.05); /* Make featured card bigger */
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6); /* Add a golden glow */
+  border: 2px solid #ffd700;
+}
+.ad-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 250px;
+  height: 200px; /* Adjust height to match jeweller cards */
+  background: #e0f7fa;
+  border: 2px dashed #00bcd4;
+  border-radius: 10px;
+  font-weight: bold;
+  color: #00838f;
+  flex-shrink: 0;
+}
+.jeweller-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 10px; }
+.jeweller-card h4 { margin: 0 0 5px 0; text-align: center; color: #b8860b; display: flex; justify-content: center; align-items: center; gap: 5px; }
+.jeweller-card p { font-size: 12px; margin: 2px 0; }
+.jeweller-card .social-links a { margin-right: 8px; text-decoration: none; font-size: 16px; }
+.catalogue-strip { display: flex; gap: 5px; overflow-x: auto; padding-top: 10px; margin-top: 10px; border-top: 1px solid #eee; }
+.catalogue-strip img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; cursor: pointer; }
+.lightbox { display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+.lightbox img { max-width: 90%; max-height: 90%; }
+.lightbox .close-lightbox { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; }
+.verified-badge { color: #1DA1F2; font-size: 16px; }
+.jeweller-actions { display: flex; justify-content: space-around; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+.action-button { background: none; border: 1px solid #ddd; padding: 5px 8px; border-radius: 5px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+.action-button:hover { background: #f0f0f0; }
+
+/* Review Modal Styles */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1000; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  justify-content: center;
+  align-items: center;
+}
+.modal-content { background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 10px; position: relative; }
+.close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; position: absolute; right: 15px; top: 5px; }
+.close-button:hover, .close-button:focus { color: black; text-decoration: none; cursor: pointer; }
+.modal-content textarea { width: calc(100% - 16px); margin-top: 10px; margin-bottom: 10px; }
+.modal-content button { width: 100%; }
+.live-toggle { display: flex; align-items: center; margin-top: 10px; }
+.live-toggle label { margin: 0 0 0 5px; font-weight: normal; }
+.hidden { display: none; }
 </style>
 <style> /* Additional styles for anchor tags to look like buttons */
   .flex a.button-link { background:#ffd700; border:none; padding:10px 15px; margin-top:12px; border-radius:6px; font-weight:bold; cursor:pointer; text-decoration:none; color:#222; text-align:center; display:block; }
@@ -34,13 +104,43 @@ button.secondary { background:#eee; }
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics-compat.js"></script> <!-- Analytics (for consistency) -->
 <script src="firebase-init.js"></script> <!-- Your centralized Firebase config -->
 
+<!-- 4. Chart.js for price charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body>
 
 <header>💎 Jewellery Calculator</header>
+<div class="container" style="text-align: center; padding: 10px;">
+  <label style="font-weight: bold; margin-bottom: 5px;">📍 Find Local Jewellers by Location:</label>
+  <div class="flex" style="justify-content: center; align-items: flex-end;">
+      <div style="flex-basis: 40%;">
+          <label for="stateInput" style="font-weight: normal; font-size: 12px; margin-top: 0;">State</label>
+          <input type="text" id="stateInput" placeholder="e.g., Maharashtra">
+      </div>
+      <div style="flex-basis: 40%;"><label for="cityInput" style="font-weight: normal; font-size: 12px; margin-top: 0;">City</label><input type="text" id="cityInput" placeholder="e.g., Mumbai"></div>
+      <button onclick="filterJewellersByLocation()" style="flex-basis: 15%; height: 36px;">Search</button>
+  </div>
+</div>
 
-<div class="ad-section" id="topAd" style="height:150px;">* Top Ad: Special Offers on Jewellery! *</div>
+
+<div class="ad-section" id="topAd" style="height:auto; padding:0; line-height: normal; border: none; background: none; min-height: 50px;">
+  <!-- 
+    This section will be dynamically filled with a video from the dashboard 
+    or an AdSense ad as a fallback.
+   -->
+</div>
+
+<div class="container">
+<h3>City Gold Rates (per gram)</h3>
+  <div class="flex">
+    <div><label>Mumbai</label><input type="number" id="rateMumbai" readonly></div>
+    <div><label>Delhi</label><input type="number" id="rateDelhi" readonly></div>
+    <div><label>Chennai</label><input type="number" id="rateChennai" readonly></div>
+    <div><label>Kolkata</label><input type="number" id="rateKolkata" readonly></div>
+  </div>
+</div>
 
 <div class="container">
 <h3>Gold Rate (per gram)</h3>
@@ -58,6 +158,11 @@ button.secondary { background:#eee; }
   <div><label>14K</label><input type="number" id="rate14" readonly></div>
   <div><label>9K</label><input type="number" id="rate9" readonly></div>
 </div>
+
+<div style="margin-top: 15px;">
+  <h4>Price Trend (Last 7 Days)</h4>
+  <canvas id="goldPriceChart"></canvas>
+</div>
 </div>
 
 <div class="container">
@@ -68,7 +173,10 @@ button.secondary { background:#eee; }
   <div><label>Calculated Rate</label><input type="number" id="silverCalc" readonly min="0"></div>
 </div>
 
-<div class="ad-section" id="silverAd" style="height:100px;">* Silver Ad: Latest Market Rates *</div>
+<div class="ad-section" id="silverAd" style="height:100px;">
+  <!-- Paste your AdSense ad unit code here -->
+  * Silver Ad: Latest Market Rates *
+</div>
 </div>
 
 <div class="container">
@@ -104,6 +212,9 @@ button.secondary { background:#eee; }
   <option value="percent">%</option>
 </select>
 
+<label>Nagina / Diamond Cost (Optional)</label>
+<input type="number" id="stoneCost" value="0" min="0">
+
 <label>GST (%)</label>
 <input type="number" id="gst" value="3" min="0">
 </div>
@@ -116,6 +227,7 @@ button.secondary { background:#eee; }
 
 <div class="flex-center">
 <button onclick="addItem()">Add Item</button>
+<button onclick="addToWishlist()" class="secondary">❤️ Add to Wishlist</button>
 <button onclick="newBill()" class="secondary">New Bill</button>
 <button onclick="saveBill()">Save & Print</button>
 <button onclick="shareWhatsApp()">WhatsApp Share</button>
@@ -125,7 +237,12 @@ button.secondary { background:#eee; }
 
 <div id="historyPreview" class="container" style="display:none; margin-top: 15px;"></div>
 
-<div class="ad-section" id="billAd" style="height:150px;">* Bill Total Ad: Earn Loyalty Points! *</div>
+<div id="wishlistPreview" class="container" style="display:none; margin-top: 15px;"></div>
+
+<div class="ad-section" id="billAd" style="height:150px;">
+  <!-- Paste your AdSense ad unit code here -->
+  * Bill Total Ad: Earn Loyalty Points! *
+</div>
 
 <div id="billPreview"></div>
 
@@ -134,18 +251,22 @@ button.secondary { background:#eee; }
 <textarea id="starReview" rows="3" placeholder="Write your review here..."></textarea>
 <button onclick="submitReview()">Submit Feedback</button>
 
-<div class="ad-section" id="reviewAd" style="height:150px;">* Review Section Ad: Get Discounts on Next Purchase! *</div>
+<div class="ad-section" id="reviewAd" style="height:150px;">
+  <!-- Paste your AdSense ad unit code here -->
+  * Review Section Ad: Get Discounts on Next Purchase! *
+</div>
 </div>
 
-<div class="container">
-<h3>Shop Details (Registration)</h3>
-<label>Shop Name</label><input id="shopName" placeholder="Enter shop name">
-<label>Address</label><input id="shopAddress" placeholder="Enter shop address">
-<label>GST No.</label><input id="shopGST" placeholder="Enter GST number">
-<label>Contact</label><input id="shopContact" placeholder="Enter contact number">
-<button onclick="shopRegister()">Save Shop Details</button>
+<div class="container" id="jewellerActions">
+  <h3>Are you a Jeweller?</h3>
+  <p>List your shop on our calculator for free and reach thousands of customers. Manage your profile and see how many users view your shop.</p>
+  <div class="flex-center">
+    <a href="shop-register.html" class="button-link" style="background-color: #28a745; color: white;">Register / Manage Your Shop</a>
+    <a href="jeweller-dashboard.html" class="button-link secondary">View Your Dashboard</a>
+  </div>
+  <input type="hidden" id="shopDocId">
 </div>
-
+ 
 <div class="container">
   <h3>💰 Investment Options</h3>
   <div class="flex">
@@ -168,9 +289,36 @@ button.secondary { background:#eee; }
   </div>
 </div>
 
+<div class="container">
+  <h3>📍 Local Jewellers Showcase</h3>
+  <p>Find trusted jewellers near you. (Side-scroll to see more)</p>
+  <div id="jewellersShowcase" class="showcase-container">
+    <!-- Jeweller cards will be loaded here by JavaScript -->
+  </div>
+</div>
+
+<!-- Shop Review Modal -->
+<div id="shopReviewModal" class="modal">
+  <div class="modal-content">
+    <span class="close-button" onclick="closeReviewModal()">&times;</span>
+    <h3>Review <span id="reviewShopName" style="color: #b8860b;"></span></h3>
+    <p>Share your experience with this jeweller.</p>
+    <textarea id="shopReviewText" rows="4" placeholder="Write your review here..."></textarea>
+    <button onclick="submitShopReview()">Submit Review</button>
+    <input type="hidden" id="currentReviewShopId">
+  </div>
+</div>
+
+<!-- Lightbox for Catalogue Images -->
+<div id="imageLightbox" class="lightbox" onclick="closeLightbox()">
+  <span class="close-lightbox">&times;</span>
+  <img id="lightboxImage" src="">
+</div>
+
 <script>
 let items=[];
 let billsHistory=[];
+let wishlist = [];
 
 // FIX: Old Jewellery logic change to ensure deduction happens on grand total
 let oldJewellery = {weight: 0, jalan: 0, rate: 0, total: 0};
@@ -207,14 +355,15 @@ function addItem(){
   let makingVal=parseFloat(document.getElementById('makingValue').value)||0;
   let makingType=document.getElementById('makingType').value;
   let gst=parseFloat(document.getElementById('gst').value)||0;
+  let stoneCost = parseFloat(document.getElementById('stoneCost').value) || 0;
   
   let rate=0;
   if(type==='gold') rate=parseFloat(document.getElementById('rate'+carat).value)||0;
   else if(type==='silver') rate=parseFloat(document.getElementById('silverCalc').value)||0;
   
   let baseAmount=rate*weight;
- let makingCharge = (makingType === 'pergram') ? makingVal * weight : (baseAmount * makingVal / 100);
-  let subtotal=baseAmount+makingCharge;
+  let makingCharge = (makingType === 'pergram') ? makingVal * weight : (baseAmount * makingVal / 100);
+  let subtotal=baseAmount+makingCharge+stoneCost;
   let gstAmt=subtotal*gst/100;
   let total=subtotal+gstAmt;
   // FIX: Old Jewellery details ko global object mein save karein, item mein nahi
@@ -223,11 +372,50 @@ function addItem(){
   oldJewellery.rate=parseFloat(document.getElementById('oldRate').value)||0;
   
   // FIX: Save original making charge values for editing
-  items.push({itemName,type,carat,weight,rate,makingCharge,subtotal,gstAmt,total, makingValue: makingVal, makingType: makingType});
+  items.push({itemName,type,carat,weight,rate,makingCharge,stoneCost,subtotal,gstAmt,total, makingValue: makingVal, makingType: makingType});
   // Clear input fields after adding an item for better UX
   document.getElementById('itemName').value = '';
   document.getElementById('weight').value = '1';
+  document.getElementById('stoneCost').value = '0';
   renderBill();
+}
+
+function addToWishlist() {
+    const itemName = document.getElementById('itemName').value || 'Jewellery Item';
+    const weight = parseFloat(document.getElementById('weight').value) || 0;
+    if (weight <= 0) {
+        alert('Please enter a valid weight to add to wishlist.');
+        return;
+    }
+    wishlist.push({
+        itemName: itemName,
+        type: document.getElementById('itemType').value,
+        carat: document.getElementById('carat').value,
+        weight: weight
+    });
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    renderWishlist();
+    alert(`'${itemName}' has been added to your wishlist!`);
+}
+
+function renderWishlist() {
+    const wishlistDiv = document.getElementById('wishlistPreview');
+    if (wishlist.length === 0) {
+        wishlistDiv.style.display = 'none';
+        return;
+    }
+    let html = '<h3>❤️ My Wishlist</h3>';
+    wishlist.forEach((item, idx) => {
+        html += `<p>${item.itemName} (${item.weight}g, ${item.carat}) <button onclick="deleteFromWishlist(${idx})">Remove</button></p>`;
+    });
+    wishlistDiv.innerHTML = html;
+    wishlistDiv.style.display = 'block';
+}
+
+function deleteFromWishlist(idx) {
+    wishlist.splice(idx, 1);
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    renderWishlist();
 }
 
 function renderBill(){
@@ -241,8 +429,9 @@ function renderBill(){
     html += `<b>Item ${idx+1}:</b> ${i.itemName} (${i.type})<br>
              Carat/%: ${i.carat}<br>
              Weight: ${i.weight} gm<br>
-             Rate/gm: ₹${i.rate.toFixed(2)}<br>
-             Making: ₹${i.makingCharge.toFixed(2)}, Subtotal: ₹${i.subtotal.toFixed(2)}, GST: ₹${i.gstAmt.toFixed(2)}, Total: ₹${i.total.toFixed(2)}<br>
+             Rate/gm: ₹${i.rate.toFixed(2)}<br>` +
+             (i.stoneCost > 0 ? `Nagina/Stone Cost: ₹${i.stoneCost.toFixed(2)}<br>` : '') +
+             `Making: ₹${i.makingCharge.toFixed(2)}, Subtotal: ₹${i.subtotal.toFixed(2)}, GST: ₹${i.gstAmt.toFixed(2)}, Total: ₹${i.total.toFixed(2)}<br>
              <div class="item-actions"><button onclick="editItem(${idx})">Edit</button><button onclick="deleteItem(${idx})">Delete</button></div><hr>`;
   });
   
@@ -275,6 +464,7 @@ function editItem(idx){
   document.getElementById('gst').value = i.subtotal > 0 ? (i.gstAmt / i.subtotal * 100).toFixed(2) : 0; // Calculate back the GST percentage
   document.getElementById('makingValue').value = i.makingValue; // Restore original making value from the item object
   document.getElementById('makingType').value = i.makingType; // Restore original making type
+  document.getElementById('stoneCost').value = i.stoneCost || 0;
 
   setDefaultCarat(); // Ensure carat dropdown is correct for the item type
   document.getElementById('carat').value=i.carat; // Set carat after type is set
@@ -359,7 +549,9 @@ function shareWhatsApp(){
   let grandTotal = newItemsTotal - (oldJewellery.total || 0);
 
   let billText = `*${shopName} Bill Details*\n\n`;
+  billText += `*Customer:* ${prompt('Enter Customer Name for WhatsApp', 'Customer') || 'Customer'}\n\n`;
   items.forEach((item, index) => {
+    if (item.stoneCost > 0) billText += `*Item ${index + 1}:* ${item.itemName} (+ Stone) - ${item.weight}g\n`; else
     billText += `*Item ${index + 1}:* ${item.itemName} (${item.type} ${item.carat}) - ${item.weight}g\n`;
     billText += `  Total: ₹${item.total.toFixed(2)}\n\n`;
 });
@@ -394,20 +586,6 @@ function showHistory(){
   });
   historyDiv.innerHTML = historyHtml;
   historyDiv.style.display = 'block';
-}
-
-function shopRegister(){
-  // FIX: Ab sabhi shop details save honge
-  let shopName = document.getElementById('shopName').value || 'Jewellery Shop';
-  localStorage.setItem('shopName', shopName);
-  localStorage.setItem('shopAddress', document.getElementById('shopAddress').value);
-  localStorage.setItem('shopGST', document.getElementById('shopGST').value);
-  localStorage.setItem('shopContact', document.getElementById('shopContact').value);
-
-  alert('Shop Details Saved: ' + shopName);
-
-  // REFACTOR: Log shop registration event to Firestore
-  db.collection('analytics_events').add({ type: 'shop_registered', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
 }
 
 function exportPDF() {
@@ -456,6 +634,11 @@ function exportPDF() {
     doc.text(`Item ${idx + 1}: ${i.itemName} (${i.type}, ${i.carat}) - ${i.weight}g @ ₹${i.rate.toFixed(2)}/g`, 15, y); // Line 445
     doc.text(`₹${i.total.toFixed(2)}`, 195, y, { align: 'right' });
     y += 6;
+    if (i.stoneCost > 0) {
+      doc.setFontSize(9).setFont(undefined, 'italic');
+      doc.text(`  (Includes Nagina/Stone Cost: ₹${i.stoneCost.toFixed(2)})`, 15, y);
+      y += 5;
+    }
     newItemsTotal += i.total;
   });
 
@@ -486,29 +669,6 @@ function exportPDF() {
   doc.save(`Bill-${shopName}-${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
-function submitReview(){
-  const reviewText = document.getElementById('starReview').value.trim();
-  if (!reviewText) {
-    alert('Please write a review before submitting.');
-    return;
-  }
-
-  // 1. Save the actual review content to a 'reviews' collection
-  db.collection('reviews').add({
-    content: reviewText,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => {
-    // 2. Log the submission event for analytics counting
-    db.collection('analytics_events').add({ type: 'review_submitted', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    
-    alert('Thank you for your feedback!');
-    document.getElementById('starReview').value = '';
-  }).catch(error => {
-    console.error("Error submitting review: ", error);
-    alert('Sorry, there was an error submitting your review. Please try again.');
-  });
-}
-
 // FIX: Initialize function theek kiya gaya hai
 window.onload=function(){
   updateCaratRates();
@@ -516,17 +676,278 @@ window.onload=function(){
   
   // 1. Bill History Load karna
   billsHistory = JSON.parse(localStorage.getItem('billsHistory')) || [];
+  // 1b. Wishlist Load karna
+  wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+  renderWishlist();
   
   // 2. Shop Details Load karna
   document.getElementById('shopName').value = localStorage.getItem('shopName') || '';
-  document.getElementById('shopAddress').value = localStorage.getItem('shopAddress') || '';
-  document.getElementById('shopGST').value = localStorage.getItem('shopGST') || '';
-  document.getElementById('shopContact').value = localStorage.getItem('shopContact') || '';
+
+  // 3. Fetch city gold rates
+  fetchCityGoldRates();
 
   // REFACTOR: Log a visitor/app usage event to Firestore
   db.collection('analytics_events').add({ type: 'visitor', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+
+  // Dynamically load configurations (AdSense and Top Ad Video)
+  db.collection('config').doc('live').get().then(doc => {
+      if (doc.exists) {
+          const config = doc.data();
+          const topAdContainer = document.getElementById('topAd');
+
+          // 1. Load Top Ad Video if URL exists
+          if (config.topAdVideoUrl) {
+              topAdContainer.innerHTML = `
+                  <video width="100%" style="border-radius: 8px; display: block;" controls autoplay muted loop>
+                      <source src="${config.topAdVideoUrl}" type="video/mp4">
+                      Your browser does not support the video tag.
+                  </video>`;
+          } 
+          // 2. Fallback to AdSense if no video URL
+          else if (config.adsense_client_id) {
+              topAdContainer.innerHTML = `
+                  <ins class="adsbygoogle" style="display:block" data-ad-client="${config.adsense_client_id}" data-ad-slot="YOUR_AD_SLOT_ID" data-ad-format="auto" data-full-width-responsive="true"></ins>`;
+              (adsbygoogle = window.adsbygoogle || []).push({});
+          }
+
+          // 3. Load AdSense script (needed for fallback)
+          const adsenseId = config.adsense_client_id;
+          const script = document.createElement('script');
+          script.async = true;
+          script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`;
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
+          console.log('AdSense script loaded for client:', adsenseId);
+      }
+  });
+
+  // 4. Load local jewellers showcase
+  loadJewellersShowcase();
 };
+
+function filterJewellersByLocation() {
+    const state = document.getElementById('stateInput').value.trim();
+    const city = document.getElementById('cityInput').value.trim();
+    localStorage.setItem('userState', state);
+    localStorage.setItem('userCity', city);
+    loadJewellersShowcase(); // Reload the showcase with the new filter
+}
+
+function renderGoldPriceChart(historicalData) {
+    const ctx = document.getElementById('goldPriceChart').getContext('2d');
+    const labels = historicalData.map(d => new Date(d.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }));
+    const prices = historicalData.map(d => d.rate24k);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '24K Gold Price',
+                data: prices,
+                borderColor: '#ffd700',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+
+
+// Fetch city-specific gold rates from Firestore
+function fetchCityGoldRates() {
+    db.collection('goldRates').doc('latest').get().then(doc => {
+        if (doc.exists) {
+            const rates = doc.data();
+            // Assuming city rates are stored in the same document, e.g., rates.mumbai
+            document.getElementById('rateMumbai').value = rates.mumbai || 'N/A';
+            document.getElementById('rateDelhi').value = rates.delhi || 'N/A';
+            document.getElementById('rateChennai').value = rates.chennai || 'N/A';
+            document.getElementById('rateKolkata').value = rates.kolkata || 'N/A';
+        } else {
+            console.log("No city gold rate data found.");
+        }
+    }).catch(error => {
+        console.error("Error fetching city gold rates: ", error);
+    });
+
+    // Fetch historical data for the chart
+    db.collection('goldRates').orderBy('timestamp', 'desc').limit(7).get().then(snapshot => {
+        const historicalData = [];
+        snapshot.forEach(doc => {
+            historicalData.push({ date: doc.data().timestamp.toDate(), rate24k: doc.data().rate24K });
+        });
+        renderGoldPriceChart(historicalData.reverse()); // Reverse to show oldest first
+    });
+}
+
+function loadJewellersShowcase() {
+    const stateFilter = localStorage.getItem('userState') || '';
+    const cityFilter = localStorage.getItem('userCity') || '';
+
+    const showcaseDiv = document.getElementById('jewellersShowcase');
+
+    let query = db.collection('registered_shops').where('isLive', '==', true);
+
+    // Apply filters
+    if (stateFilter) {
+        query = query.where('state', '==', stateFilter);
+    }
+    if (cityFilter) {
+        query = query.where('city', '==', cityFilter);
+    }
+
+    query.limit(20).onSnapshot(snapshot => {
+        if (snapshot.empty) {
+            if (!stateFilter && !cityFilter) {
+                showcaseDiv.innerHTML = '<p>No live jewellers found. Be the first to register and go live!</p>';
+            } else {
+                showcaseDiv.innerHTML = `<p>No live jewellers found for <b>${cityFilter || ''} ${stateFilter || ''}</b>. Try a different location or clear the search.</p>`;
+            }
+            return;
+        }
+
+        let html = ''; let cardCount = 0;
+
+        snapshot.forEach(doc => {
+            const shop = doc.data();
+            // Default DP if none provided
+            const dpUrl = shop.dpUrl || 'https://via.placeholder.com/60';
+
+            const featuredClass = shop.isFeatured ? 'featured' : '';
+            const verifiedBadge = shop.isVerified ? '<span class="verified-badge" title="Verified Jeweller">✔</span>' : '';
+
+            let catalogueHtml = '';
+            if (shop.catalogueImages && shop.catalogueImages.length > 0) {
+                catalogueHtml += '<div class="catalogue-strip">';
+             shop.catalogueImages.forEach(item => {
+                    if (item.type === 'image') {
+                        catalogueHtml += `<img src="${item.url}" loading="lazy" onclick="event.stopPropagation(); openLightbox('${item.url}')">`;
+                    } else if (item.type === 'video') {
+                        catalogueHtml += `<video src="${item.url}" width="50" height="50"  muted loop onclick="event.stopPropagation(); openLightbox('${item.url}')"></video>`;
+
+                    }
+
+                });
+
+                catalogueHtml += '</div>';
+            }
+
+            html += `
+                <div class="jeweller-card ${featuredClass}" data-shop-id="${doc.id}" onclick="logProfileView('${doc.id}')">
+                    <img src="${dpUrl}" alt="${shop.name || 'Jeweller'} DP" loading="lazy">
+                    <h4>${shop.name || 'N/A'} ${verifiedBadge}</h4>
+                    <p>📍 ${shop.city || ''}${shop.city && shop.state ? ', ' : ''}${shop.state || ''}</p>
+                    <div class="social-links">
+                        ${shop.insta ? `<a href="https://instagram.com/${shop.insta.replace(/@/g, '')}" target="_blank" onclick="event.stopPropagation()">📸</a>` : ''}
+                        ${shop.fb ? `<a href="https://facebook.com/${shop.fb}" target="_blank" onclick="event.stopPropagation()">📘</a>` : ''}
+                        ${shop.website ? `<a href="${shop.website.startsWith('http') ? shop.website : 'https://' + shop.website}" target="_blank" onclick="event.stopPropagation()">🌐</a>` : ''}
+                    </div>
+                    <div class="jeweller-actions">
+                        <button class="action-button" onclick="event.stopPropagation(); likeShop('${doc.id}')">❤️ <span id="likes-${doc.id}">${shop.likesCount || 0}</span></button>
+                        <button class="action-button" onclick="event.stopPropagation(); followShop('${doc.id}')">⭐ <span id="follows-${doc.id}">${shop.followsCount || 0}</span></button>
+                        <button class="action-button" onclick="event.stopPropagation(); openReviewModal('${doc.id}', '${shop.name || 'this shop'}')">✍️ Review</button>
+                    </div>
+                    ${catalogueHtml}
+                </div>
+            `;
+            cardCount++;
+            // Insert an ad card after every 4 jeweller cards
+            if (cardCount % 4 === 0) {
+                html += `<div class="ad-card">
+                           <!-- Paste your AdSense ad unit code here -->
+                           Your Ad Here
+                         </div>`;
+            }
+        });
+        showcaseDiv.innerHTML = html;
+    });
+}
+
+function logProfileView(shopId) {
+    if (!shopId) return;
+    // Increment the profileViews count for the specific shop
+    db.collection('registered_shops').doc(shopId).update({
+        profileViews: firebase.firestore.FieldValue.increment(1)
+    }).catch(error => {
+        console.error("Error logging profile view: ", error);
+    });
+}
+
+function openLightbox(imageUrl) {
+    document.getElementById('lightboxImage').src = imageUrl;
+    document.getElementById('imageLightbox').style.display = 'flex';
+}
+
+function closeLightbox() {
+    document.getElementById('imageLightbox').style.display = 'none';
+    document.getElementById('lightboxImage').src = ''; // Clear image
+}
+
+async function likeShop(shopId) {
+    if (!shopId) return;
+    try {
+        await db.collection('registered_shops').doc(shopId).update({
+            likesCount: firebase.firestore.FieldValue.increment(1)
+        });
+        const likesSpan = document.getElementById(`likes-${shopId}`);
+        if (likesSpan) likesSpan.innerText = parseInt(likesSpan.innerText) + 1;
+    } catch (error) { console.error("Error liking shop: ", error); }
+}
+
+async function followShop(shopId) {
+    if (!shopId) return;
+    try {
+        await db.collection('registered_shops').doc(shopId).update({
+            followsCount: firebase.firestore.FieldValue.increment(1)
+        });
+        const followsSpan = document.getElementById(`follows-${shopId}`);
+        if (followsSpan) followsSpan.innerText = parseInt(followsSpan.innerText) + 1;
+    } catch (error) { console.error("Error following shop: ", error); }
+}
+
+function openReviewModal(shopId, shopName) {
+    document.getElementById('currentReviewShopId').value = shopId;
+    document.getElementById('reviewShopName').innerText = shopName;
+    document.getElementById('shopReviewModal').style.display = 'flex';
+}
+
+function closeReviewModal() {
+    document.getElementById('shopReviewModal').style.display = 'none';
+    document.getElementById('shopReviewText').value = '';
+}
+
+async function submitShopReview() {
+    const shopId = document.getElementById('currentReviewShopId').value;
+    const reviewText = document.getElementById('shopReviewText').value.trim();
+    if (!shopId || !reviewText) { alert('Please write a review.'); return; }
+    await db.collection('reviews').add({
+        shopId: shopId,
+        content: reviewText,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert('Review submitted successfully!');
+    closeReviewModal();
+}
+
+function submitReview(){
+  const reviewText = document.getElementById('starReview').value.trim();
+  if (!reviewText) { alert('Please write a review before submitting.'); return; }
+  db.collection('reviews').add({ content: reviewText, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
+    .then(() => {
+      db.collection('analytics_events').add({ type: 'review_submitted', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      alert('Thank you for your feedback!');
+      document.getElementById('starReview').value = '';
+    }).catch(error => console.error("Error submitting review: ", error));
+}
 </script>
+
 
 </body>
 </html>

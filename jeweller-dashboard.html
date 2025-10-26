@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeweller Dashboard</title>
+<style>
+body { font-family:'Poppins',sans-serif; background:#f5f6fa; margin:0; color:#222; padding: 15px; }
+header { background:#ffd700; padding:15px; text-align:center; font-weight:bold; font-size:24px; margin: -15px -15px 15px -15px; }
+.container { max-width:750px; margin:15px auto; background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+h3 { text-align: center; }
+.metric { text-align: center; margin: 20px 0; }
+.metric-value { font-size: 48px; font-weight: bold; color: #b8860b; }
+.metric-label { font-size: 18px; color: #555; }
+.button-link { background:#ffd700; border:none; padding:10px 15px; margin-top:12px; border-radius:6px; font-weight:bold; cursor:pointer; text-decoration:none; color:#222; text-align:center; display:inline-block; }
+.flex-center { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:15px; }
+.status-section { text-align: center; margin-top: 20px; padding: 10px; background: #e9ecef; border-radius: 8px; }
+.status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+    color: white;
+}
+.review-item { border-left: 4px solid #ffd700; padding-left: 10px; margin-bottom: 10px; background: #fff9e6; border-radius: 4px; }
+.review-item p { margin: 0; font-style: italic; }
+.review-item small { color: #777; }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+
+</style>
+<!-- Firebase Libraries -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="firebase-init.js"></script>
+</head>
+<body>
+
+<header>📈 Jeweller Dashboard</header>
+
+<div class="container" id="loginView">
+  <h3>View Your Analytics</h3>
+  <p>Please enter your registered contact number to see your dashboard.</p>
+  <input id="contactLogin" type="text" placeholder="Enter your contact number">
+  <div class="flex-center">
+    <button onclick="loginToDashboard()">Login</button>
+  </div>
+</div>
+
+<div class="container" id="dashboardView" style="display:none;">
+  <h3 id="shopNameHeader">Your Shop Analytics</h3>
+  <div class="status-section">
+      <h4>Your Status</h4>
+      <span id="verificationStatus"></span>
+      <span id="featuredStatus"></span>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric">
+      <div id="profileViews" class="metric-value">0</div>
+      <div class="metric-label">Total Profile Views</div>
+    </div>
+    <div class="metric">
+      <div id="totalLikes" class="metric-value">0</div>
+      <div class="metric-label">Total Likes</div>
+    </div>
+    <div class="metric">
+      <div id="totalFollows" class="metric-value">0</div>
+      <div class="metric-label">Total Follows</div>
+    </div>
+    <div class="metric">
+      <div id="totalShares" class="metric-value">0</div>
+      <div class="metric-label">Total Social Shares</div>
+    </div>
+  </div>
+
+  <div id="reviewsContainer" style="margin-top: 20px;">
+    <h4>Your Reviews (<span id="totalReviews">0</span>)</h4>
+    <div id="reviewList">
+      <!-- Reviews will be loaded here -->
+    </div>
+  </div>
+
+  <div class="flex-center">
+    <a href="shop-register.html" class="button-link">Edit My Profile</a>
+    <a href="index.html" class="button-link secondary">Back to Calculator</a>
+  </div>
+</div>
+
+<script>
+const db = firebase.firestore();
+
+function loginToDashboard() {
+    const contact = document.getElementById('contactLogin').value.trim();
+    if (!contact) {
+        alert('Please enter a contact number.');
+        return;
+    }
+
+    db.collection('registered_shops').doc(contact).get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'block';
+            document.getElementById('shopNameHeader').innerText = `${data.name || 'Your Shop'} Analytics`;
+            document.getElementById('profileViews').innerText = data.profileViews || 0; // Display profile views
+            document.getElementById('totalLikes').innerText = data.likesCount || 0; // Display likes
+            document.getElementById('totalFollows').innerText = data.followsCount || 0; // Display follows
+            document.getElementById('totalShares').innerText = data.sharesCount || 0; // Display shares
+            localStorage.setItem('shopContact', contact); // Save for easy access later
+
+            // Fetch total reviews for this specific shop
+            db.collection('reviews').where('shopId', '==', contact).get().then(reviewSnapshot => {
+                const reviewCount = reviewSnapshot.size;
+                document.getElementById('totalReviews').innerText = reviewCount;
+                const reviewListDiv = document.getElementById('reviewList');
+                if (reviewSnapshot.empty) {
+                    reviewListDiv.innerHTML = '<p>You have not received any reviews yet.</p>';
+                } else {
+                    let reviewsHtml = '';
+                    reviewSnapshot.forEach(reviewDoc => {
+                        const reviewData = reviewDoc.data();
+                        const date = reviewData.createdAt ? new Date(reviewData.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
+                        reviewsHtml += `<div class="review-item"><p>"${reviewData.content}"</p><small>on ${date}</small></div>`;
+                    });
+                    reviewListDiv.innerHTML = reviewsHtml;
+                }
+            }).catch(error => {
+                console.error("Error fetching shop reviews: ", error);
+                document.getElementById('reviewList').innerHTML = '<p>Could not load reviews.</p>';
+            });
+
+            // Display Verification and Featured Status
+            const verificationBadge = document.getElementById('verificationStatus');
+            verificationBadge.className = 'status-badge';
+            verificationBadge.style.backgroundColor = data.isVerified ? '#28a745' : '#6c757d';
+            verificationBadge.innerText = data.isVerified ? '✔ Verified' : 'Not Verified';
+
+            const featuredBadge = document.getElementById('featuredStatus');
+            featuredBadge.className = 'status-badge';
+            featuredBadge.style.backgroundColor = data.isFeatured ? '#ffd700' : '#6c757d';
+            featuredBadge.style.color = data.isFeatured ? '#333' : 'white';
+            featuredBadge.innerText = data.isFeatured ? '⭐ Featured' : 'Not Featured';
+        } else {
+            alert('No shop found with this contact number. Please register first.');
+            // Clear local storage if no shop found
+            localStorage.removeItem('shopContact');
+        }
+    });
+}
+</script>
+
+</body>
+</html>
