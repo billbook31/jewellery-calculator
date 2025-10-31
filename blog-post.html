@@ -26,7 +26,7 @@ h1 {
   color: #b8860b;
   text-align: center;
 }
-p {
+.blog-content {
   line-height: 1.7;
   white-space: pre-wrap; /* This will respect new lines in the content */
 }
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
       container.innerHTML = `
         <h1>${blog.title}</h1>
         <div class="meta-info">Published on: ${blog.date}</div>
-        <p>${blog.content}</p>
+        <div class="blog-content">${blog.content}</div>
         <a href="blog.html" class="back-link">← Back to All Posts</a>
       `;
     } else {

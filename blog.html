@@ -89,12 +89,15 @@ document.addEventListener('DOMContentLoaded', function() {
     snapshot.forEach((doc, index) => {
       const blog = doc.data();
       // Link to the new dedicated blog post page
+      // FIX: Add a style for the anchor tag to make it behave like a block and remove underline.
       html += `
-        <a href="blog-post.html?id=${doc.id}" class="blog-card-link"><div class="blog-card">
+        <a href="blog-post.html?id=${doc.id}" style="text-decoration: none; color: inherit; display: block;">
+        <div class="blog-card">
           <h3>${blog.title}</h3>
           <small><i>Published on: ${blog.date}</i></small>
           <p style="text-align: left;">${blog.content.substring(0, 200)}...</p>
-        </div></a>`;
+        </div>
+        </a>`;
       
       // Insert an ad after every 2 blog posts
       if ((index + 1) % 2 === 0 && index < snapshot.size - 1) {

@@ -109,6 +109,7 @@ h1,h3 { text-align:center; }
 </div>
 
 <!-- TinyMCE Rich Text Editor Script -->
+<!-- NOTE: भविष्य में चेतावनी हटाने के लिए 'no-api-key' को अपनी असली TinyMCE API कुंजी से बदलें। -->
 <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 
 <!-- Firebase SDK -->
@@ -205,10 +206,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }, error => {
     console.error("Error listening to gold rates: ", error);
-    document.getElementById('goldRate24K').innerText = 'Error';
-    document.getElementById('goldRate22K').innerText = 'Error';
-    document.getElementById('goldRate20K').innerText = 'Error';
+    // Fallback to Netlify function if Firestore listener fails
+    fetchGoldRateFromNetlify();
   });
+
+  // Fallback function to fetch gold rate from Netlify function
+  async function fetchGoldRateFromNetlify() {
+      console.log("Firestore rate failed. Falling back to Netlify function...");
+      try {
+          const response = await fetch('/.netlify/functions/get-gold-rate');
+          const data = await response.json();
+          if (data && data.price && !data.error) {
+              const pricePerGram = data.price / 31.1035;
+              document.getElementById('goldRate24K').innerText = `₹${pricePerGram.toFixed(2)}`;
+              document.getElementById('goldRate22K').innerText = `₹${(pricePerGram * 22 / 24).toFixed(2)}`;
+              document.getElementById('goldRate20K').innerText = `₹${(pricePerGram * 20 / 24).toFixed(2)}`;
+          } else {
+              throw new Error(data.error || "Unknown error from Netlify function");
+          }
+      } catch (err) {
+          console.error("Fallback fetch error:", err);
+          document.getElementById('goldRate24K').innerText = 'Error';
+          document.getElementById('goldRate22K').innerText = 'Error';
+          document.getElementById('goldRate20K').innerText = 'Error';
+      }
+  }
 
   // --- Blog Management ---
   const blogCollection = db.collection('blogs');
@@ -409,14 +431,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initialize TinyMCE Rich Text Editor
   tinymce.init({
-    selector: '#blogContent',
-    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
-    height: 300,
-    // IMPORTANT: This allows you to upload images directly from your computer to the blog.
-    // It uses TinyMCE's free image hosting.
-    images_upload_url: 'postAcceptor.php',
-    automatic_uploads: true,
+      selector: '#blogContent',
+      plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+      toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+      height: 300,
+      // IMPORTANT: This allows you to upload images directly from your computer to the blog.
+      // It uses TinyMCE's free image hosting if you have a key.
+      // For automatic uploads to work, you need a plan with TinyMCE.
+      // The free plan allows basic editing.
+      images_upload_url: 'postAcceptor.php', // This is a placeholder and may require a backend handler.
+      automatic_uploads: true,
   });
 });</script>
 
