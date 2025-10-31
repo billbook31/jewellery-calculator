@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gold-jewellery-calculator.netlify.app/sitemap.xml

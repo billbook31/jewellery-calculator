@@ -148,12 +148,8 @@ button.secondary { background:#eee; }
 
 <div class="container">
 <h3>City Gold Rates (per gram)</h3>
-  <div class="flex">
-    <div><label>Mumbai</label><input type="number" id="rateMumbai" readonly></div>
-    <div><label>Delhi</label><input type="number" id="rateDelhi" readonly></div>
-    <div><label>Chennai</label><input type="number" id="rateChennai" readonly></div>
-    <div><label>Kolkata</label><input type="number" id="rateKolkata" readonly></div>
-  </div>
+  <label>Mumbai (24K)</label>
+  <input type="number" id="rateMumbai" readonly placeholder="Loading today's rate...">
 </div>
 
 <div class="container">
@@ -531,8 +527,8 @@ function saveBill(){
 
 function printBill(){
   let win=window.open('', '_blank');
-  // FIX: Shop details Local Storage se load ho rahe hain
-  let shopName=localStorage.getItem('shopName') || document.getElementById('shopName').value || 'Jewellery Shop';
+  // FIX: Removed reference to non-existent 'shopName' element to prevent errors.
+  let shopName=localStorage.getItem('shopName') || 'Jewellery Shop';
   let shopAddress=localStorage.getItem('shopAddress') || '';
   let customerName=prompt('Enter Customer Name','Customer')||'Customer';
   let shopGST=localStorage.getItem('shopGST') || '';
@@ -695,8 +691,6 @@ window.onload=function(){
   renderWishlist();
   
   // 2. Shop Details Load karna
-  document.getElementById('shopName').value = localStorage.getItem('shopName') || '';
-
   // 3. Fetch city gold rates
   fetchCityGoldRates();
 
@@ -775,30 +769,40 @@ function renderGoldPriceChart(historicalData) {
 
 
 // Fetch city-specific gold rates from Firestore
-function fetchCityGoldRates() {
-    db.collection('goldRates').doc('latest').get().then(doc => {
-        if (doc.exists) {
-            const rates = doc.data();
-            // Assuming city rates are stored in the same document, e.g., rates.mumbai
-            document.getElementById('rateMumbai').value = rates.mumbai || 'N/A';
-            document.getElementById('rateDelhi').value = rates.delhi || 'N/A';
-            document.getElementById('rateChennai').value = rates.chennai || 'N/A';
-            document.getElementById('rateKolkata').value = rates.kolkata || 'N/A';
-        } else {
-            console.log("No city gold rate data found.");
-        }
-    }).catch(error => {
-        console.error("Error fetching city gold rates: ", error);
-    });
+async function fetchCityGoldRates() {
+    // हमारे सुरक्षित Netlify Function को कॉल करें
+    const functionUrl = `/.netlify/functions/get-gold-rate`;
 
-    // Fetch historical data for the chart
-    db.collection('goldRates').orderBy('timestamp', 'desc').limit(7).get().then(snapshot => {
-        const historicalData = [];
-        snapshot.forEach(doc => {
-            historicalData.push({ date: doc.data().timestamp.toDate(), rate24k: doc.data().rate24K });
-        });
-        renderGoldPriceChart(historicalData.reverse()); // Reverse to show oldest first
-    });
+    try {
+        const response = await fetch(functionUrl); // 'await' requires an async function
+        const data = await response.json();
+
+        if (data && data.price && !data.error) {
+            const pricePerOunce = data.price;
+            // 1 Troy Ounce = 31.1035 ग्राम
+            const pricePerGram = pricePerOunce / 31.1035;
+
+            // मुंबई रेट को अपडेट करें
+            document.getElementById('rateMumbai').value = pricePerGram.toFixed(2);
+            
+            // केवल तभी 24K रेट अपडेट करें जब वह डिफ़ॉल्ट मान पर हो, ताकि यूजर का इनपुट ओवरराइट न हो।
+            const rate24Input = document.getElementById('rate24');
+            if (rate24Input.value === "7200" || rate24Input.value === "") { // केवल तभी अपडेट करें जब डिफ़ॉल्ट मान हो
+                rate24Input.value = pricePerGram.toFixed(2);
+            }
+            updateCaratRates(); // बाकी कैरेट रेट्स को भी अपडेट करें
+        } else {
+            console.error("Error from Netlify function:", data.error || "Unknown error");
+            document.getElementById('rateMumbai').value = 'Error';
+        }
+    } catch (error) {
+        console.error("Error calling Netlify function: ", error);
+        document.getElementById('rateMumbai').value = 'Error';
+    }
+    // Historical data for the chart
+    // अभी के लिए चार्ट को हटा रहे हैं क्योंकि हमारे पास सीधे API से ऐतिहासिक डेटा नहीं है।
+    // इसे बाद में जोड़ा जा सकता है।
+    document.getElementById('goldPriceChart').style.display = 'none';
 }
 
 function loadJewellersShowcase() {

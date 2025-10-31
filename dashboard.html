@@ -108,6 +108,9 @@ h1,h3 { text-align:center; }
   <button onclick="saveConfig()">Save Configuration</button>
 </div>
 
+<!-- TinyMCE Rich Text Editor Script -->
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -191,9 +194,9 @@ document.addEventListener('DOMContentLoaded', function() {
   db.collection('goldRates').doc('latest').onSnapshot(doc => {
     if (doc.exists) {
       const rates = doc.data();
-      document.getElementById('goldRate24K').innerText = `₹${(rates.rate24K || 0).toFixed(2)}`;
-      document.getElementById('goldRate22K').innerText = `₹${(rates.rate22K || 0).toFixed(2)}`;
-      document.getElementById('goldRate20K').innerText = `₹${(rates.rate20K || 0).toFixed(2)}`;
+      document.getElementById('goldRate24K').innerText = `₹${(rates.mumbai || rates.rate24K || 0).toFixed(2)}`;
+      document.getElementById('goldRate22K').innerText = `₹${((rates.mumbai || rates.rate24K || 0) * 22 / 24).toFixed(2)}`;
+      document.getElementById('goldRate20K').innerText = `₹${((rates.mumbai || rates.rate24K || 0) * 20 / 24).toFixed(2)}`;
     } else {
       console.log("No gold rate data found. Waiting for Cloud Function to run.");
       document.getElementById('goldRate24K').innerText = 'Waiting for data...';
@@ -211,8 +214,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const blogCollection = db.collection('blogs');
 
   window.addBlogPost = function() {
+    // Get content from the TinyMCE editor
+    const content = tinymce.get('blogContent').getContent();
     const title = document.getElementById('blogTitle').value;
-    const content = document.getElementById('blogContent').value;
+
     if (!title || !content) {
       alert('Please enter both title and content for the blog post.');
       return;
@@ -224,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).then(() => {
       alert('Blog post added successfully!');
       document.getElementById('blogTitle').value = '';
-      document.getElementById('blogContent').value = '';
+      tinymce.get('blogContent').setContent(''); // Clear the editor
     }).catch(error => console.error("Error adding blog post: ", error));
   };
 
@@ -401,6 +406,18 @@ document.addEventListener('DOMContentLoaded', function() {
           })
           .catch(error => console.error("Error saving ad config: ", error));
   };
+
+  // Initialize TinyMCE Rich Text Editor
+  tinymce.init({
+    selector: '#blogContent',
+    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+    height: 300,
+    // IMPORTANT: This allows you to upload images directly from your computer to the blog.
+    // It uses TinyMCE's free image hosting.
+    images_upload_url: 'postAcceptor.php',
+    automatic_uploads: true,
+  });
 });</script>
 
 </body>

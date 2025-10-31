@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Title and meta description will be set dynamically by JavaScript -->
+<title>Jewellery Blog</title>
+<meta name="description" content="Read our latest blog post about gold, jewellery, and market trends.">
+<style>
+body {
+  font-family: Poppins, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+h1 {
+  color: #b8860b;
+  text-align: center;
+}
+p {
+  line-height: 1.7;
+  white-space: pre-wrap; /* This will respect new lines in the content */
+}
+.meta-info {
+    text-align: center;
+    color: #777;
+    margin-bottom: 25px;
+}
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 30px;
+    font-weight: bold;
+    color: #b8860b;
+    text-decoration: none;
+}
+</style>
+</head>
+<body>
+<div class="container" id="postContainer">
+  <!-- Single blog post will be loaded here -->
+  <h1>Loading Post...</h1>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="firebase-init.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const db = firebase.firestore();
+  const container = document.getElementById("postContainer");
+
+  // 1. Get the blog post ID from the URL
+  const params = new URLSearchParams(window.location.search);
+  const postId = params.get('id');
+
+  if (!postId) {
+    container.innerHTML = '<h1>Error</h1><p>No blog post specified.</p><a href="blog.html" class="back-link">Back to Blog List</a>';
+    return;
+  }
+
+  // 2. Fetch the specific blog post from Firestore
+  db.collection('blogs').doc(postId).get().then(doc => {
+    if (doc.exists) {
+      const blog = doc.data();
+      
+      // 3. Update the page title and meta description for SEO
+      document.title = `${blog.title} | Jewellery Calculator Blog`;
+      document.querySelector('meta[name="description"]').setAttribute("content", blog.content.substring(0, 160) + "...");
+
+      // 4. Display the blog post content
+      container.innerHTML = `
+        <h1>${blog.title}</h1>
+        <div class="meta-info">Published on: ${blog.date}</div>
+        <p>${blog.content}</p>
+        <a href="blog.html" class="back-link">← Back to All Posts</a>
+      `;
+    } else {
+      container.innerHTML = '<h1>Post Not Found</h1><p>The requested blog post does not exist.</p><a href="blog.html" class="back-link">Back to Blog List</a>';
+    }
+  }).catch(error => {
+    console.error("Error fetching post: ", error);
+    container.innerHTML = '<h1>Error</h1><p>Could not load the blog post.</p>';
+  });
+});
+</script>
+</body>
+</html>
