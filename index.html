@@ -702,14 +702,28 @@ window.onload=function(){
       if (doc.exists) {
           const config = doc.data();
           const topAdContainer = document.getElementById('topAd');
+          const videoUrl = config.topAdVideoUrl;
 
           // 1. Load Top Ad Video if URL exists
-          if (config.topAdVideoUrl) {
-              topAdContainer.innerHTML = `
-                  <video width="100%" style="border-radius: 8px; display: block;" controls autoplay muted loop>
-                      <source src="${config.topAdVideoUrl}" type="video/mp4">
-                      Your browser does not support the video tag.
-                  </video>`;
+          if (videoUrl) {
+              // Check if it's an Instagram URL
+              if (videoUrl.includes('instagram.com')) {
+                  // It's an Instagram Reel, use an iframe for embedding
+                  // We need to add '/embed' to the URL and adjust styling
+                  const embedUrl = videoUrl.split("?")[0] + 'embed';
+                  topAdContainer.style.height = 'auto'; // Adjust container height
+                  topAdContainer.innerHTML = `
+                      <iframe src="${embedUrl}" width="320" height="580" style="border:none; overflow:hidden; border-radius: 8px; max-width: 100%;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                  `;
+              } else {
+                  // It's a direct video link (e.g., .mp4), use the video tag
+                  topAdContainer.innerHTML = `
+                      <video width="100%" style="border-radius: 8px; display: block;" controls autoplay muted loop>
+                          <source src="${videoUrl}" type="video/mp4">
+                          Your browser does not support the video tag.
+                      </video>`;
+              }
+
           } 
           // 2. Fallback to AdSense if no video URL
           else if (config.adsense_client_id) {

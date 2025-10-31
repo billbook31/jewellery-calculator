@@ -131,6 +131,28 @@ function logout() {
     }).catch(error => console.error("Logout Error:", error));
   }
 }
+
+// --- Blog Management Functions (Global Scope) ---
+function addBlogPost() {
+  const db = firebase.firestore();
+  const content = tinymce.get('blogContent').getContent();
+  const title = document.getElementById('blogTitle').value;
+
+  if (!title || !content) {
+    alert('Please enter both title and content for the blog post.');
+    return;
+  }
+  db.collection('blogs').add({
+    title: title,
+    content: content,
+    date: new Date().toISOString().slice(0, 10)
+  }).then(() => {
+    alert('Blog post added successfully!');
+    document.getElementById('blogTitle').value = '';
+    tinymce.get('blogContent').setContent(''); // Clear the editor
+  }).catch(error => console.error("Error adding blog post: ", error));
+}
+
 document.addEventListener('DOMContentLoaded', function() {  
   const auth = firebase.auth();
   const db = firebase.firestore();
@@ -234,26 +256,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // --- Blog Management ---
   const blogCollection = db.collection('blogs');
-
-  window.addBlogPost = function() {
-    // Get content from the TinyMCE editor
-    const content = tinymce.get('blogContent').getContent();
-    const title = document.getElementById('blogTitle').value;
-
-    if (!title || !content) {
-      alert('Please enter both title and content for the blog post.');
-      return;
-    }
-    blogCollection.add({
-      title: title,
-      content: content,
-      date: new Date().toISOString().slice(0, 10)
-    }).then(() => {
-      alert('Blog post added successfully!');
-      document.getElementById('blogTitle').value = '';
-      tinymce.get('blogContent').setContent(''); // Clear the editor
-    }).catch(error => console.error("Error adding blog post: ", error));
-  };
 
   window.deleteBlogPost = function(id) {
     if (confirm('Are you sure you want to delete this blog post?')) {
@@ -437,10 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
       height: 300,
       // IMPORTANT: This allows you to upload images directly from your computer to the blog.
       // It uses TinyMCE's free image hosting if you have a key.
-      // For automatic uploads to work, you need a plan with TinyMCE.
-      // The free plan allows basic editing.
-      images_upload_url: 'postAcceptor.php', // This is a placeholder and may require a backend handler.
-      automatic_uploads: true,
+      // We are disabling image uploads for now as it requires a backend.
   });
 });</script>
 
