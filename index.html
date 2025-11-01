@@ -785,26 +785,26 @@ function renderGoldPriceChart(historicalData) {
 // Fetch city-specific gold rates from Firestore
 async function fetchCityGoldRates() {
     // हमारे सुरक्षित Netlify Function को कॉल करें
-    const functionUrl = `/.netlify/functions/get-gold-rate`;
+    const functionUrl = '/.netlify/functions/get-gold-rate';
 
     try {
-        const response = await fetch(functionUrl); // 'await' requires an async function
+        const response = await fetch(functionUrl);
         const data = await response.json();
 
         if (data && data.price && !data.error) {
-            const pricePerOunce = data.price;
-            // 1 Troy Ounce = 31.1035 ग्राम
-            const pricePerGram = pricePerOunce / 31.1035;
+            const pricePerOunce = data.price; // यह रेट प्रति ट्रॉय औंस है
+            const pricePerGram = pricePerOunce / 31.1035; // 1 ट्रॉय औंस = 31.1035 ग्राम
 
             // मुंबई रेट को अपडेट करें
             document.getElementById('rateMumbai').value = pricePerGram.toFixed(2);
             
-            // केवल तभी 24K रेट अपडेट करें जब वह डिफ़ॉल्ट मान पर हो, ताकि यूजर का इनपुट ओवरराइट न हो।
+            // जैसा आपने कहा, मुख्य 24K रेट को नहीं बदलेंगे, सिर्फ मुंबई रेट को अपडेट करेंगे।
             const rate24Input = document.getElementById('rate24');
-            if (rate24Input.value === "7200" || rate24Input.value === "") { // केवल तभी अपडेट करें जब डिफ़ॉल्ट मान हो
+            if (rate24Input.value === "7200" || rate24Input.value === "") {
                 rate24Input.value = pricePerGram.toFixed(2);
+                updateCaratRates(); // बाकी कैरेट रेट्स को भी अपडेट करें
             }
-            updateCaratRates(); // बाकी कैरेट रेट्स को भी अपडेट करें
+
         } else {
             console.error("Error from Netlify function:", data.error || "Unknown error");
             document.getElementById('rateMumbai').value = 'Error';
@@ -813,10 +813,6 @@ async function fetchCityGoldRates() {
         console.error("Error calling Netlify function: ", error);
         document.getElementById('rateMumbai').value = 'Error';
     }
-    // Historical data for the chart
-    // अभी के लिए चार्ट को हटा रहे हैं क्योंकि हमारे पास सीधे API से ऐतिहासिक डेटा नहीं है।
-    // इसे बाद में जोड़ा जा सकता है।
-    document.getElementById('goldPriceChart').style.display = 'none';
 }
 
 function loadJewellersShowcase() {
